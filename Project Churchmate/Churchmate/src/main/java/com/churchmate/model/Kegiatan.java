@@ -2,6 +2,7 @@ package com.churchmate.model;
 
 import java.time.LocalDate;
 import java.util.Date;
+import java.time.LocalTime;
 
 public class Kegiatan {
     private int kegiatanId;
@@ -14,5 +15,21 @@ public class Kegiatan {
         this.judul = judul;
         this.tanggal = tanggal;
         this.kategori = kategori;
+    }
+
+    public int getKegiatanId() {
+        return kegiatanId;
+    }
+
+    public String getJudul() {
+        return judul;
+    }
+
+    public Date getTanggal() {
+        return tanggal;
+    }
+
+    public String getKategori() {
+        return kategori;
     }
 }
