@@ -1,50 +1,41 @@
 package com.churchmate;
 
-import com.churchmate.controller.ChatManager;
 import com.churchmate.model.Gereja;
-import com.churchmate.model.User;
 import com.churchmate.model.Ibadah;
 import com.churchmate.model.Kegiatan;
-import com.churchmate.service.ChatService;
 import com.churchmate.service.DatabaseService;
-import com.churchmate.ui.UserUI;
 
-import java.time.LocalDate;
 import java.time.LocalDateTime;
-import java.time.LocalTime;
-
+import java.util.Date; // Pakai java.util.Date untuk Kegiatan
 
 public class App {
     public static void main(String[] args) {
         DatabaseService db = new DatabaseService();
 
+        // 1. Model Gereja (4 Parameter: id, nama, alamat, deskripsi)
         db.save(new Gereja(
                 1,
                 "Gereja ABC",
                 "Jl. Mawar",
-                "08123456789",
-                "Gereja umum",
-                "www.gereja.com",
-                "gereja@mail.com"
+                "Gereja umum di pusat kota"
         ));
+
+        // 2. Model Ibadah (4 Parameter: id, nama, jadwal(LocalDateTime), lokasi)
         db.save(new Ibadah(
                 1,
-                1,
                 "Ibadah Minggu",
-                LocalDate.of(2026, 2, 15),
-                LocalTime.of(8, 0),
-                "Pdt. Yohanes",
-                "Kasih Tuhan",
+                LocalDateTime.of(2026, 4, 19, 8, 0),
                 "Gereja Utama"
         ));
+
+        // 3. Model Kegiatan (4 Parameter: id, judul, tanggal(Date), kategori)
         db.save(new Kegiatan(
                 1,
-                1,
                 "Persekutuan Pemuda",
-                LocalDate.of(2026, 2, 16),
-                "Pemuda",
-                "Aula Gereja",
-                "Kegiatan persekutuan rutin pemuda"
+                new Date(), // Mengambil tanggal hari ini
+                "Pemuda"
         ));
+
+        System.out.println("Data berhasil disimpan ke DatabaseService!");
     }
 }

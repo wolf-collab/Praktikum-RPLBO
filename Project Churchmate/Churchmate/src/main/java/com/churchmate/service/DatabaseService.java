@@ -1,25 +1,29 @@
 package com.churchmate.service;
 
-import java.util.ArrayList;
+import java.sql.Connection;
 import java.util.List;
-import java.time.LocalDate;
-import java.time.LocalDateTime;
-import com.churchmate.model.Kegiatan;
-import com.churchmate.model.Ibadah;
-import com.churchmate.model.Gereja;
+import java.util.ArrayList;
 
+// Asumsi EntityManager adalah class bawaan/dummy untuk ORM
+class EntityManager {}
 
 public class DatabaseService {
-    /** ini untuk membuat storage sementara untuk menyimpan datanya */
-    private final List<Object> storage = new ArrayList<>();
+    private Connection connection;
+    private EntityManager entityManager;
 
-    /** ini untuk menyimpan datanya ke dalam storage */
     public void save(Object entity) {
-        storage.add(entity);
+        // Insert logika query
     }
 
-    /** ini untuk mencari datanya dalam storage */
+    public Object findById(int id) {
+        return null;
+    }
+
     public List<Object> findAll() {
-        return storage;
+        return new ArrayList<>();
+    }
+
+    public void delete(int id) {
+        // Delete logika query
     }
 }
