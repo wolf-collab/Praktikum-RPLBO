@@ -20,7 +20,6 @@ public class Gereja {
         this.email = email;
     }
 
-    public int getGerejaId() { return gerejaId; }
     public String getNama() { return nama; }
     public String getAlamat() { return alamat; }
     public String getNoTelp() { return noTelp; }

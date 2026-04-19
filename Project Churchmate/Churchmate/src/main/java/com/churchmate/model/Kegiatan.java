@@ -6,30 +6,41 @@ import java.time.LocalTime;
 
 public class Kegiatan {
     private int kegiatanId;
+    private int gerejaId;
     private String judul;
-    private Date tanggal;
+    private LocalDate tanggal;
     private String kategori;
+    private String lokasi;
+    private String deskripsi;
 
-    public Kegiatan(int kegiatanId, String judul, Date tanggal, String kategori) {
+    public Kegiatan(int kegiatanId, int gerejaId, String judul, LocalDate tanggal,
+                    String kategori, String lokasi, String deskripsi) {
         this.kegiatanId = kegiatanId;
+        this.gerejaId = gerejaId;
         this.judul = judul;
         this.tanggal = tanggal;
         this.kategori = kategori;
-    }
-
-    public int getKegiatanId() {
-        return kegiatanId;
+        this.lokasi = lokasi;
+        this.deskripsi = deskripsi;
     }
 
     public String getJudul() {
         return judul;
     }
 
-    public Date getTanggal() {
+    public LocalDate getTanggal() {
         return tanggal;
     }
 
     public String getKategori() {
         return kategori;
+    }
+
+    public String getDeskripsi() {
+        return deskripsi;
+    }
+
+    public String getLokasi() {
+        return lokasi;
     }
 }

@@ -25,8 +25,6 @@ public class Ibadah {
         this.lokasi = lokasi;
     }
 
-    public int getIbadahId() { return ibadahId; }
-    public int getGerejaId() { return gerejaId; }
     public String getNamaIbadah() { return namaIbadah; }
     public LocalDate getTglIbadah() { return tglIbadah; }
     public LocalTime getJam() { return jam; }
