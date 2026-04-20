@@ -4,9 +4,14 @@ import junit.framework.Test;
 import junit.framework.TestCase;
 import junit.framework.TestSuite;
 
-// Import class yang akan diuji
 import com.churchmate.model.Gereja;
+import com.churchmate.model.Ibadah;
 import com.churchmate.controller.ChatManager;
+import com.churchmate.service.ChatService;
+import com.churchmate.service.DatabaseService;
+
+import java.time.LocalDate;
+import java.time.LocalTime;
 
 /**
  * Unit test untuk logika utama aplikasi Churchmate.
@@ -23,33 +28,50 @@ public class AppTest extends TestCase {
 
     /**
      * Menguji method getInfo() pada model Gereja.
-     * Memastikan string yang dikembalikan formatnya sesuai.
      */
     public void testGerejaModel() {
-        // Persiapan Data (Arrange)
-        Gereja gereja = new Gereja(1, "GKJ Gondokusuman", "Jl. Dr. Wahidin", "Gereja bersejarah di Yogyakarta");
+        Gereja gereja = new Gereja(
+                1,
+                "GKJ Gondokusuman",
+                "Jl. Dr. Wahidin",
+                "08123456789",
+                "Gereja bersejarah di Yogyakarta",
+                "www.gkjgondokusuman.org",
+                "info@gkjgondokusuman.org"
+        );
 
-        // Aksi (Act)
         String info = gereja.getInfo();
 
-        // Verifikasi (Assert)
-        String expectedOutput = "Gereja: GKJ Gondokusuman, Alamat: Jl. Dr. Wahidin";
-        assertEquals("Format info gereja tidak sesuai!", expectedOutput, info);
+        assertNotNull("Info gereja seharusnya tidak null", info);
+        assertTrue("Info gereja harus memuat nama gereja", info.contains("GKJ Gondokusuman"));
+        assertTrue("Info gereja harus memuat alamat", info.contains("Jl. Dr. Wahidin"));
+        assertTrue("Info gereja harus memuat email", info.contains("info@gkjgondokusuman.org"));
     }
 
     /**
-     * Menguji logika pembuatan sesi pada ChatManager.
-     * Memastikan sessionId berhasil di-generate (tidak null).
+     * Menguji bahwa ChatManager dapat meneruskan pesan ke ChatService
+     * dan menghasilkan jawaban tentang ibadah.
      */
-    public void testChatManagerSession() {
-        // Persiapan Data
-        ChatManager chatManager = new ChatManager();
+    public void testChatManagerSendMessage() {
+        DatabaseService db = new DatabaseService();
 
-        // Aksi
-        String sessionId = chatManager.startSession();
+        db.save(new Ibadah(
+                1,
+                1,
+                "Ibadah Minggu",
+                LocalDate.of(2026, 2, 15),
+                LocalTime.of(8, 0),
+                "Pdt. Yohanes",
+                "Kasih Tuhan",
+                "Gereja Utama"
+        ));
 
-        // Verifikasi
-        assertNotNull("Session ID seharusnya tidak null setelah startSession() dipanggil!", sessionId);
-        assertTrue("Session ID harus berupa string yang tidak kosong", !sessionId.isEmpty());
+        ChatService chatService = new ChatService(db);
+        ChatManager chatManager = new ChatManager(chatService);
+
+        String response = chatManager.sendMessage("kapan ibadah minggu?");
+
+        assertNotNull("Response chatbot seharusnya tidak null", response);
+        assertTrue("Response harus memuat informasi ibadah", response.toLowerCase().contains("ibadah"));
     }
 }

@@ -1,121 +1,218 @@
 package com.churchmate.service;
 
-import java.lang.reflect.Method;
+import com.churchmate.model.Gereja;
+import com.churchmate.model.Ibadah;
+import com.churchmate.model.Kegiatan;
+
 import java.util.ArrayList;
 import java.util.List;
 
 public class ChatService {
-    private final DatabaseService databaseService;
-    private final List<String> responseHistory = new ArrayList<>();
 
-    public ChatService() {
-        this(new DatabaseService());
+    private final DatabaseService db;
+
+    public ChatService(DatabaseService db) {
+        this.db = db;
     }
 
-    public ChatService(DatabaseService databaseService) {
-        this.databaseService = databaseService;
-    }
+    public String processMessage(String message) {
+        String query = message.toLowerCase();
 
-    public String processMessage(String msg) {
-        if (msg == null || msg.trim().isEmpty()) {
-            return "Pesan tidak boleh kosong.";
+        if (query.contains("ibadah") || query.contains("pendeta") || query.contains("siapa")
+                || query.contains("tema")) {
+            return handleIbadahQuery(query);
+        } else if (query.contains("kegiatan") || query.contains("acara")) {
+            return handleKegiatanQuery(query);
+        } else if (query.contains("gereja") || query.contains("alamat") || query.contains("kontak")
+                || query.contains("telepon") || query.contains("email") || query.contains("website")) {
+            return handleGerejaQuery(query);
         }
 
-        String cleanMessage = msg.trim();
-        saveMessage("User", cleanMessage);
+        List<Object> data = db.findAll();
+        for (Object obj : data) {
+            if (obj instanceof Ibadah ibadah) {
+                if (matchesKeyword(query, ibadah.getNamaibadah())) {
+                    return handleIbadahQuery(query);
+                }
+            } else if (obj instanceof Kegiatan kegiatan) {
+                if (matchesKeyword(query, kegiatan.getJudul()) || matchesKeyword(query, kegiatan.getKategori())) {
+                    return handleKegiatanQuery(query);
+                }
+            }
+        }
 
-        String knowledgeResult = searchKnowledge(cleanMessage);
-        String response = generateResponse(knowledgeResult);
-
-        saveMessage("Bot", response);
-        responseHistory.add(response);
-
-        return response;
+        return "Maaf, informasi tidak ditemukan";
     }
 
-    public String searchKnowledge(String query) {
-        List<String> matches = new ArrayList<>();
-        String normalizedQuery = query.toLowerCase();
+    private boolean matchesKeyword(String query, String name) {
+        if (name == null)
+            return false;
+        String lowerName = name.toLowerCase();
+        if (query.contains(lowerName))
+            return true;
 
-        for (Object data : databaseService.findAll()) {
-            if (data instanceof ChatMessageRecord) {
+        String[] words = lowerName.split("\\s+");
+        for (String word : words) {
+
+            if (word.equals("ibadah") || word.equals("kegiatan") || word.equals("gereja")) {
                 continue;
             }
-
-            String description = describeData(data);
-            if (description.toLowerCase().contains(normalizedQuery)) {
-                matches.add(description);
+            if (word.length() > 3 && query.contains(word)) {
+                return true;
             }
         }
-
-        if (matches.isEmpty()) {
-            return "";
-        }
-
-        return String.join(" | ", matches);
+        return false;
     }
 
-    public String generateResponse(String knowledgeResult) {
-        if (knowledgeResult == null || knowledgeResult.isBlank()) {
-            return "Maaf, data yang Anda cari belum tersedia di database gereja.";
-        }
+    private String handleIbadahQuery(String query) {
+        List<Object> data = db.findAll();
+        List<Ibadah> exactMatches = new ArrayList<>();
+        List<Ibadah> partialMatches = new ArrayList<>();
+        List<Ibadah> allIbadah = new ArrayList<>();
 
-        return "Saya menemukan informasi berikut: " + knowledgeResult;
-    }
-
-    public void saveMessage(String sender, String msg) {
-        databaseService.save(new ChatMessageRecord(sender, msg));
-    }
-
-    public List<String> getResponseHistory() {
-        return new ArrayList<>(responseHistory);
-    }
-
-    public List<String> getConversationHistory() {
-        List<String> conversation = new ArrayList<>();
-
-        for (Object data : databaseService.findAll()) {
-            if (data instanceof ChatMessageRecord record) {
-                conversation.add(record.format());
-            }
-        }
-
-        return conversation;
-    }
-
-    public void saveKnowledge(Object data) {
-        databaseService.save(data);
-    }
-
-    private String describeData(Object data) {
-        String[] preferredMethods = {"getInfo", "getUpcoming", "getDetail", "getProfile", "getJadwal"};
-
-        for (String methodName : preferredMethods) {
-            try {
-                Method method = data.getClass().getMethod(methodName);
-                Object result = method.invoke(data);
-                if (result instanceof String text) {
-                    return text;
+        for (Object obj : data) {
+            if (obj instanceof Ibadah ibadah) {
+                allIbadah.add(ibadah);
+                if (query.contains(ibadah.getNamaibadah().toLowerCase())) {
+                    exactMatches.add(ibadah);
+                } else if (matchesKeyword(query, ibadah.getNamaibadah())) {
+                    partialMatches.add(ibadah);
                 }
-            } catch (ReflectiveOperationException ignored) {
-                // Coba method lain yang lebih cocok.
             }
         }
 
-        return data.toString();
+        List<Ibadah> listIbadah = exactMatches;
+        if (listIbadah.isEmpty()) {
+            listIbadah = partialMatches;
+        }
+
+        if (listIbadah.isEmpty()) {
+            listIbadah = allIbadah;
+        }
+
+        if (listIbadah.isEmpty()) {
+            return "Maaf, informasi tidak ditemukan";
+        }
+
+        if (listIbadah.size() > 1) {
+            StringBuilder panduan = new StringBuilder(
+                    "Informasi ibadah apa yang ingin Anda ketahui? Pilihan yang tersedia:\n");
+            for (Ibadah ibadah : listIbadah) {
+                panduan.append("- ").append(ibadah.getNamaibadah()).append("\n");
+            }
+            return panduan.toString().trim();
+        }
+
+        Ibadah ibadah = listIbadah.get(0);
+
+        if (query.contains("kapan") || query.contains("tanggal") || query.contains("jam")) {
+            return "Ibadah " + ibadah.getNamaibadah() +
+                    " dilaksanakan pada " + ibadah.getTglIbadah() +
+                    " pukul " + ibadah.getJam() + ".";
+        }
+
+        if (query.contains("pendeta") || query.contains("siapa")) {
+            return "Pendeta untuk " + ibadah.getNamaibadah() +
+                    " adalah " + ibadah.getPendeta() + ".";
+        }
+
+        if (query.contains("tema")) {
+            return "Tema " + ibadah.getNamaibadah() +
+                    " adalah \"" + ibadah.getTema() + "\".";
+        }
+
+        if (query.contains("lokasi") || query.contains("dimana") || query.contains("di mana")) {
+            return ibadah.getNamaibadah() +
+                    " dilaksanakan di " + ibadah.getLokasi() + ".";
+        }
+
+        return ibadah.getUpcoming();
     }
 
-    private static class ChatMessageRecord {
-        private final String sender;
-        private final String message;
+    private String handleKegiatanQuery(String query) {
+        List<Object> data = db.findAll();
+        List<Kegiatan> exactMatches = new ArrayList<>();
+        List<Kegiatan> partialMatches = new ArrayList<>();
+        List<Kegiatan> allKegiatan = new ArrayList<>();
 
-        private ChatMessageRecord(String sender, String message) {
-            this.sender = sender;
-            this.message = message;
+        for (Object obj : data) {
+            if (obj instanceof Kegiatan kegiatan) {
+                allKegiatan.add(kegiatan);
+                if (query.contains(kegiatan.getJudul().toLowerCase()) || query.contains(kegiatan.getKategori().toLowerCase())) {
+                    exactMatches.add(kegiatan);
+                } else if (matchesKeyword(query, kegiatan.getJudul()) || matchesKeyword(query, kegiatan.getKategori())) {
+                    partialMatches.add(kegiatan);
+                }
+            }
         }
 
-        private String format() {
-            return sender + ": " + message;
+        List<Kegiatan> listKegiatan = exactMatches;
+        if (listKegiatan.isEmpty()) {
+            listKegiatan = partialMatches;
         }
+
+        if (listKegiatan.isEmpty()) {
+            listKegiatan = allKegiatan;
+        }
+
+        if (listKegiatan.isEmpty()) {
+            return "Maaf, informasi tidak ditemukan";
+        }
+
+        if (listKegiatan.size() > 1) {
+            StringBuilder panduan = new StringBuilder("Kegiatan apa yang ingin Anda ketahui? Pilihan yang tersedia:\n");
+            for (Kegiatan kegiatan : listKegiatan) {
+                panduan.append("- ").append(kegiatan.getJudul()).append("\n");
+            }
+            return panduan.toString().trim();
+        }
+
+        Kegiatan kegiatan = listKegiatan.get(0);
+
+        if (query.contains("kapan") || query.contains("tanggal")) {
+            return "Kegiatan " + kegiatan.getJudul() +
+                    " dilaksanakan pada " + kegiatan.getTanggal() + ".";
+        }
+
+        if (query.contains("lokasi") || query.contains("dimana") || query.contains("di mana")) {
+            return "Kegiatan " + kegiatan.getJudul() +
+                    " dilaksanakan di " + kegiatan.getLokasi() + ".";
+        }
+
+        if (query.contains("kategori")) {
+            return "Kategori kegiatan " + kegiatan.getJudul() +
+                    " adalah " + kegiatan.getKategori() + ".";
+        }
+
+        return kegiatan.getDetail();
+    }
+
+    private String handleGerejaQuery(String query) {
+        List<Object> data = db.findAll();
+
+        for (Object obj : data) {
+            if (obj instanceof Gereja gereja) {
+
+                if (query.contains("alamat") || query.contains("dimana") || query.contains("di mana")) {
+                    return "Alamat gereja: " + gereja.getAlamat();
+                }
+
+                if (query.contains("telepon") || query.contains("kontak") || query.contains("nomor")) {
+                    return "Nomor telepon gereja: " + gereja.getNoTelp();
+                }
+
+                if (query.contains("email")) {
+                    return "Email gereja: " + gereja.getEmail();
+                }
+
+                if (query.contains("website")) {
+                    return "Website gereja: " + gereja.getWebsite();
+                }
+
+                return gereja.getInfo();
+            }
+        }
+
+        return "Maaf, informasi tidak ditemukan";
     }
 }

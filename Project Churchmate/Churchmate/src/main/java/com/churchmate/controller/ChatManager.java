@@ -1,18 +1,16 @@
 package com.churchmate.controller;
 
-import java.util.Map;
-import java.util.HashMap;
+import com.churchmate.service.ChatService;
 
 public class ChatManager {
-    private Map<String, String> activeSessions = new HashMap<>();
-    private String sessionId;
 
-    public String startSession() {
-        this.sessionId = java.util.UUID.randomUUID().toString();
-        return this.sessionId;
+    private final ChatService chatService;
+
+    public ChatManager(ChatService chatService) {
+        this.chatService = chatService;
     }
 
-    public void endSession(String id) {
-        activeSessions.remove(id);
+    public String sendMessage(String message) {
+        return chatService.processMessage(message);
     }
 }
