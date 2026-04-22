@@ -58,4 +58,8 @@ public class Kegiatan {
     public String getDeskripsi() {
         return deskripsi;
     }
+
+    public int getGerejaid() {
+        return gerejaid;
+    }
 }
