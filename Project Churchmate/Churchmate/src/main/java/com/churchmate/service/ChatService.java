@@ -7,6 +7,7 @@ import com.churchmate.model.Kegiatan;
 import java.time.LocalDate;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.function.Function;
 
 public class ChatService {
 
@@ -103,54 +104,67 @@ public class ChatService {
         return false;
     }
 
-    private String handleIbadahQuery(String query) {
+    private <T> List<T> findBestMatches(String query, Class<T> clazz,
+            Function<T, Boolean> nameMatcher,
+            Function<T, Boolean> keywordMatcher,
+            Function<T, LocalDate> dateExtractor) {
         List<Object> data = db.findAll();
-        List<Ibadah> exactDateAndNameMatches = new ArrayList<>();
-        List<Ibadah> exactDateAndKeywordMatches = new ArrayList<>();
-        List<Ibadah> exactDateMatches = new ArrayList<>();
-        List<Ibadah> exactMatches = new ArrayList<>();
-        List<Ibadah> partialMatches = new ArrayList<>();
-        List<Ibadah> allIbadah = new ArrayList<>();
+
+        List<T> exactDateAndNameMatches = new ArrayList<>();
+        List<T> exactDateAndKeywordMatches = new ArrayList<>();
+        List<T> exactDateMatches = new ArrayList<>();
+        List<T> exactMatches = new ArrayList<>();
+        List<T> partialMatches = new ArrayList<>();
+        List<T> allItems = new ArrayList<>();
 
         for (Object obj : data) {
-            if (obj instanceof Ibadah ibadah) {
-                allIbadah.add(ibadah);
+            if (clazz.isInstance(obj)) {
+                T item = clazz.cast(obj);
+                allItems.add(item);
 
-                boolean matchName = query.contains(ibadah.getNamaibadah().toLowerCase());
-                boolean matchKeyword = matchesKeyword(query, ibadah.getNamaibadah());
-                boolean matchDate = matchesDate(query, ibadah.getTglIbadah());
+                boolean matchName = nameMatcher.apply(item);
+                boolean matchKeyword = keywordMatcher.apply(item);
+                LocalDate date = dateExtractor.apply(item);
+                boolean matchDate = matchesDate(query, date);
 
                 if (matchDate && matchName) {
-                    exactDateAndNameMatches.add(ibadah);
+                    exactDateAndNameMatches.add(item);
                 } else if (matchDate && matchKeyword) {
-                    exactDateAndKeywordMatches.add(ibadah);
+                    exactDateAndKeywordMatches.add(item);
                 } else if (matchDate) {
-                    exactDateMatches.add(ibadah);
+                    exactDateMatches.add(item);
                 } else if (matchName) {
-                    exactMatches.add(ibadah);
+                    exactMatches.add(item);
                 } else if (matchKeyword) {
-                    partialMatches.add(ibadah);
+                    partialMatches.add(item);
                 }
             }
         }
 
-        List<Ibadah> listIbadah = exactDateAndNameMatches;
-        if (listIbadah.isEmpty()) {
-            listIbadah = exactDateAndKeywordMatches;
-        }
-        if (listIbadah.isEmpty()) {
-            listIbadah = exactDateMatches;
-        }
-        if (listIbadah.isEmpty()) {
-            listIbadah = exactMatches;
-        }
-        if (listIbadah.isEmpty()) {
-            listIbadah = partialMatches;
-        }
+        if (!exactDateAndNameMatches.isEmpty())
+            return exactDateAndNameMatches;
+        if (!exactDateAndKeywordMatches.isEmpty())
+            return exactDateAndKeywordMatches;
+        if (!exactDateMatches.isEmpty())
+            return exactDateMatches;
+        if (!exactMatches.isEmpty())
+            return exactMatches;
+        if (!partialMatches.isEmpty())
+            return partialMatches;
+        return allItems;
+    }
 
-        if (listIbadah.isEmpty()) {
-            listIbadah = allIbadah;
-        }
+    public List<Ibadah> findMatchingIbadah(String query) {
+        return findBestMatches(
+                query,
+                Ibadah.class,
+                ibadah -> query.contains(ibadah.getNamaibadah().toLowerCase()),
+                ibadah -> matchesKeyword(query, ibadah.getNamaibadah()),
+                Ibadah::getTglIbadah);
+    }
+
+    private String handleIbadahQuery(String query) {
+        List<Ibadah> listIbadah = findMatchingIbadah(query);
 
         if (listIbadah.isEmpty()) {
             return "Maaf, informasi tidak ditemukan";
@@ -235,46 +249,26 @@ public class ChatService {
         return response.toString().trim();
     }
 
+    public List<Kegiatan> findMatchingKegiatan(String query) {
+        return findBestMatches(
+                query,
+                Kegiatan.class,
+                kegiatan -> query.contains(kegiatan.getJudul().toLowerCase())
+                        || query.contains(kegiatan.getKategori().toLowerCase()),
+                kegiatan -> matchesKeyword(query, kegiatan.getJudul()) || matchesKeyword(query, kegiatan.getKategori()),
+                Kegiatan::getTanggal);
+    }
+
     private String handleKegiatanQuery(String query) {
-        List<Object> data = db.findAll();
-        List<Kegiatan> exactMatches = new ArrayList<>();
-        List<Kegiatan> partialMatches = new ArrayList<>();
-        List<Kegiatan> allKegiatan = new ArrayList<>();
-
-        for (Object obj : data) {
-            if (obj instanceof Kegiatan kegiatan) {
-                allKegiatan.add(kegiatan);
-                if (query.contains(kegiatan.getJudul().toLowerCase())
-                        || query.contains(kegiatan.getKategori().toLowerCase())) {
-                    exactMatches.add(kegiatan);
-                } else if (matchesKeyword(query, kegiatan.getJudul())
-                        || matchesKeyword(query, kegiatan.getKategori())) {
-                    partialMatches.add(kegiatan);
-                }
-            }
-        }
-
-        List<Kegiatan> listKegiatan = exactMatches;
-        if (listKegiatan.isEmpty()) {
-            listKegiatan = partialMatches;
-        }
-
-        if (listKegiatan.isEmpty()) {
-            listKegiatan = allKegiatan;
-        }
+        List<Kegiatan> listKegiatan = findMatchingKegiatan(query);
 
         if (listKegiatan.isEmpty()) {
             return "Maaf, informasi tidak ditemukan";
         }
 
         if (listKegiatan.size() > 1) {
-            StringBuilder panduan = new StringBuilder("Kegiatan apa yang ingin Anda ketahui? Pilihan yang tersedia:\n");
-            for (Kegiatan kegiatan : listKegiatan) {
-                panduan.append("- ").append(kegiatan.getJudul()).append("\n");
-            }
-            return panduan.toString().trim();
+            return handleMultipleKegiatanMatches(query, listKegiatan);
         }
-
         Kegiatan kegiatan = listKegiatan.get(0);
 
         if (query.contains("kapan") || query.contains("tanggal")) {
@@ -293,6 +287,42 @@ public class ChatService {
         }
 
         return kegiatan.getDetail();
+    }
+
+    private String handleMultipleKegiatanMatches(String query, List<Kegiatan> listKegiatan) {
+        StringBuilder response = new StringBuilder("Terdapat beberapa data kegiatan yang sesuai:\n");
+
+        for (Kegiatan kegiatan : listKegiatan) {
+            if (query.contains("kapan") || query.contains("tanggal")) {
+                response.append("")
+                        .append(kegiatan.getJudul())
+                        .append(" dilaksanakan pada ")
+                        .append(kegiatan.getTanggal())
+                        .append(".\n");
+            } else if (query.contains("lokasi") || query.contains("dimana") || query.contains("di mana")) {
+                response.append("")
+                        .append(kegiatan.getJudul())
+                        .append(" pada ")
+                        .append(kegiatan.getTanggal())
+                        .append(" dilaksanakan di ")
+                        .append(kegiatan.getLokasi())
+                        .append(".\n");
+            } else if (query.contains("kategori")) {
+                response.append("")
+                        .append(kegiatan.getJudul())
+                        .append(" pada ")
+                        .append(kegiatan.getTanggal())
+                        .append(" memiliki kategori ")
+                        .append(kegiatan.getKategori())
+                        .append(".\n");
+            } else {
+                response.append("")
+                        .append(kegiatan.getDetail())
+                        .append("\n");
+            }
+        }
+
+        return response.toString().trim();
     }
 
     private String handleGerejaQuery(String query) {
