@@ -1,18 +1,10 @@
 package com.churchmate;
 
-import com.churchmate.model.Gereja;
-import com.churchmate.model.Ibadah;
-import com.churchmate.model.Kegiatan;
 import com.churchmate.service.DatabaseService;
 import com.churchmate.controller.ChatManager;
 import com.churchmate.service.ChatService;
 import com.churchmate.ui.UserUI;
 
-
-import java.time.LocalDate;
-import java.time.LocalDateTime;
-import java.time.LocalTime;
-import java.util.Date; // Pakai java.util.Date untuk Kegiatan
 
 public class App {
     public static void main(String[] args) {
