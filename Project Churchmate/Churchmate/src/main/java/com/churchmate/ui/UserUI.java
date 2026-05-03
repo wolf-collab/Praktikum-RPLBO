@@ -9,14 +9,13 @@ import java.awt.event.ActionEvent;
 
 public class UserUI extends JFrame {
 
-    private JPanel chatPanel; // Mengganti JTextArea menjadi JPanel
+    private JPanel chatPanel;
     private JScrollPane scrollPane;
     private JTextField inputField;
     private final ChatManager chatManager;
 
     public UserUI(ChatManager chatManager) {
         this.chatManager = chatManager;
-
         setTitle("Churchmate - User Chatbot");
         setSize(950, 650);
         setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
@@ -107,6 +106,7 @@ public class UserUI extends JFrame {
         JMenuItem faq1 = new JMenuItem("Jadwal ibadah?");
         JMenuItem faq2 = new JMenuItem("Agenda kegiatan?");
         JMenuItem faq3 = new JMenuItem("Alamat gereja?");
+        
         faqMenu.add(faq1); faqMenu.add(faq2); faqMenu.add(faq3);
 
         btnMenu.addActionListener(e -> faqMenu.show(btnMenu, 0, -faqMenu.getPreferredSize().height));
