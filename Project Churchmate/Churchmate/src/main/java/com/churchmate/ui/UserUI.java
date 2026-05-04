@@ -1,218 +1,245 @@
 package com.churchmate.ui;
 
 import com.churchmate.controller.ChatManager;
+import com.churchmate.dao.AlkitabDAO;
+import javafx.geometry.Insets;
+import javafx.geometry.Pos;
+import javafx.geometry.Side;
+import javafx.scene.Scene;
+import javafx.scene.control.*;
+import javafx.scene.layout.*;
+import javafx.scene.paint.Color;
+import javafx.scene.text.Font;
+import javafx.scene.text.FontWeight;
+import javafx.stage.Stage;
 
-import javax.swing.*;
-import javax.swing.border.EmptyBorder;
-import java.awt.*;
-import java.awt.event.ActionEvent;
+import java.util.List;
 
-public class UserUI extends JFrame {
+public class UserUI {
 
-    private JPanel chatPanel;
-    private JScrollPane scrollPane;
-    private JTextField inputField;
+    private BorderPane mainPanel;
+    private VBox chatPanel;
+    private ScrollPane scrollPane;
+    private VBox bottomPanel;
+    private TextField inputField;
+
     private final ChatManager chatManager;
+    // Buat satu instance DAO agar CSV hanya dibaca satu kali saat aplikasi buka
+    private final AlkitabDAO alkitabDAO = new AlkitabDAO();
 
     public UserUI(ChatManager chatManager) {
         this.chatManager = chatManager;
-        setTitle("Churchmate - User Chatbot");
-        setSize(950, 650);
-        setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
-        setLocationRelativeTo(null);
     }
 
-    public void showChatInterface() {
-        JPanel mainPanel = new JPanel(new BorderLayout());
+    public void showChatInterface(Stage primaryStage) {
+        primaryStage.setTitle("Churchmate - User Chatbot");
 
-        // ==========================================
-        // 1. HEADER & SIDEBAR (Tetap sama)
-        // ==========================================
-        JPanel header = new JPanel(new BorderLayout());
-        header.setBackground(new Color(74, 59, 204));
-        header.setPreferredSize(new Dimension(getWidth(), 50));
-        header.setBorder(new EmptyBorder(10, 20, 10, 20));
+        mainPanel = new BorderPane();
+        // 1. HEADER
+        HBox header = new HBox();
+        header.setStyle("-fx-background-color: #4a3bcc;");
+        header.setPrefHeight(50);
+        header.setPadding(new Insets(10, 20, 10, 20));
+        header.setAlignment(Pos.CENTER_LEFT);
 
-        JLabel titleLabel = new JLabel("CHURCHMATE   CHATBOT GEREJA");
-        titleLabel.setForeground(Color.WHITE);
-        titleLabel.setFont(new Font("Arial", Font.BOLD, 14));
-        header.add(titleLabel, BorderLayout.WEST);
+        Label titleLabel = new Label("CHURCHMATE   CHATBOT GEREJA");
+        titleLabel.setTextFill(Color.WHITE);
+        titleLabel.setFont(Font.font("Arial", FontWeight.BOLD, 14));
 
-        JLabel statusLabel = new JLabel("STATUS: TERHUBUNG  🟢");
-        statusLabel.setForeground(Color.WHITE);
-        statusLabel.setFont(new Font("Arial", Font.BOLD, 12));
-        header.add(statusLabel, BorderLayout.EAST);
+        Region headerSpacer = new Region();
+        HBox.setHgrow(headerSpacer, Priority.ALWAYS);
 
-        JPanel sidebar = new JPanel(new BorderLayout());
-        sidebar.setBackground(new Color(245, 245, 245));
-        sidebar.setPreferredSize(new Dimension(200, getHeight()));
+        Label statusLabel = new Label("STATUS: TERHUBUNG  🟢");
+        statusLabel.setTextFill(Color.WHITE);
+        statusLabel.setFont(Font.font("Arial", FontWeight.BOLD, 12));
 
-        JPanel navPanel = new JPanel();
-        navPanel.setLayout(new BoxLayout(navPanel, BoxLayout.Y_AXIS));
-        navPanel.setOpaque(false);
-        navPanel.setBorder(new EmptyBorder(20, 10, 10, 10));
+        header.getChildren().addAll(titleLabel, headerSpacer, statusLabel);
+        // 2. CHAT AREA (Tengah)
+        chatPanel = new VBox(10);
+        chatPanel.setStyle("-fx-background-color: white;");
+        chatPanel.setPadding(new Insets(10));
 
-        JButton btnNewChat = createSidebarButton("PERCAKAPAN BARU", true);
-        JButton btnSearchChat = createSidebarButton("CARI PERCAKAPAN", false);
+        scrollPane = new ScrollPane(chatPanel);
+        scrollPane.setStyle("-fx-background: white; -fx-border-color: transparent;");
+        scrollPane.setFitToWidth(true);
+        scrollPane.setHbarPolicy(ScrollPane.ScrollBarPolicy.NEVER);
+        scrollPane.setVbarPolicy(ScrollPane.ScrollBarPolicy.AS_NEEDED);
 
-        navPanel.add(btnNewChat);
-        navPanel.add(Box.createRigidArea(new Dimension(0, 10)));
-        navPanel.add(btnSearchChat);
+        chatPanel.heightProperty().addListener((obs, oldVal, newVal) -> scrollPane.setVvalue(1.0));
 
-        JPanel bottomSidebar = new JPanel(new FlowLayout(FlowLayout.CENTER));
-        bottomSidebar.setOpaque(false);
-        bottomSidebar.setBorder(new EmptyBorder(0, 0, 20, 0));
-        JButton btnLogout = new JButton("LOGOUT");
-        bottomSidebar.add(btnLogout);
+        addChatBubble("Halo! Saya Churchmate Bot.\nMau tahu informasi apa hari ini?", false);
+        // 3. INPUT AREA (Bawah)
+        bottomPanel = new VBox();
+        bottomPanel.setStyle("-fx-background-color: white;");
+        bottomPanel.setPadding(new Insets(15, 20, 20, 20));
 
-        sidebar.add(navPanel, BorderLayout.NORTH);
-        sidebar.add(bottomSidebar, BorderLayout.SOUTH);
+        HBox inputWrapper = new HBox(10);
+        inputWrapper.setAlignment(Pos.CENTER);
+        inputWrapper.setStyle("-fx-border-color: lightgray; -fx-border-radius: 5; -fx-background-radius: 5;");
+        inputWrapper.setPadding(new Insets(5));
+        inputWrapper.setPrefHeight(45);
 
-        // ==========================================
-        // 3. CHAT AREA (Diubah menjadi Panel dinamis)
-        // ==========================================
-        chatPanel = new JPanel();
-        chatPanel.setLayout(new BoxLayout(chatPanel, BoxLayout.Y_AXIS));
-        chatPanel.setBackground(Color.WHITE);
-        chatPanel.setBorder(new EmptyBorder(10, 10, 10, 10));
+        Button btnMenu = new Button("≡ MENU");
+        btnMenu.setStyle("-fx-background-color: #4a3bcc; -fx-text-fill: white; -fx-cursor: hand;");
 
-        scrollPane = new JScrollPane(chatPanel);
-        scrollPane.setBorder(null);
-        scrollPane.setHorizontalScrollBarPolicy(ScrollPaneConstants.HORIZONTAL_SCROLLBAR_NEVER);
-        // Mengatur agar scroll lebih mulus
-        scrollPane.getVerticalScrollBar().setUnitIncrement(16);
+        ContextMenu faqMenu = new ContextMenu();
+        MenuItem faq1 = new MenuItem("Jadwal ibadah?");
+        MenuItem faq2 = new MenuItem("Agenda kegiatan?");
+        faqMenu.getItems().addAll(faq1, faq2);
+        btnMenu.setOnAction(e -> faqMenu.show(btnMenu, Side.TOP, 0, 0));
 
-        // Menampilkan pesan sambutan awal (Kiri - Bot)
-        addChatBubble("Halo! Saya Churchmate Bot.\nMau tahu informasi apa hari ini? (Misal: 'jadwal ibadah', 'kegiatan', 'alamat')", false);
+        faq1.setOnAction(e -> processUserInput("jadwal ibadah"));
+        faq2.setOnAction(e -> processUserInput("kegiatan"));
 
-        // ==========================================
-        // 4. INPUT AREA (Tetap sama)
-        // ==========================================
-        JPanel bottomPanel = new JPanel(new BorderLayout(10, 0));
-        bottomPanel.setBackground(Color.WHITE);
-        bottomPanel.setBorder(new EmptyBorder(15, 20, 20, 20));
+        inputField = new TextField();
+        inputField.setStyle("-fx-background-color: transparent; -fx-border-color: transparent;");
+        inputField.setFont(Font.font("Segoe UI", 14));
+        HBox.setHgrow(inputField, Priority.ALWAYS);
 
-        JPanel inputWrapper = new JPanel(new BorderLayout(10, 0));
-        inputWrapper.setBorder(BorderFactory.createLineBorder(Color.LIGHT_GRAY, 1, true));
-        inputWrapper.setBackground(Color.WHITE);
-        inputWrapper.setPreferredSize(new Dimension(0, 45));
+        Button btnSend = new Button("↑");
+        btnSend.setFont(Font.font("Arial", FontWeight.BOLD, 16));
+        btnSend.setStyle("-fx-background-color: #e6e6e6; -fx-cursor: hand;");
 
-        JButton btnMenu = new JButton("≡ MENU");
-        btnMenu.setBackground(new Color(74, 59, 204));
-        btnMenu.setForeground(Color.WHITE);
-        btnMenu.setFocusPainted(false);
+        inputWrapper.getChildren().addAll(btnMenu, inputField, btnSend);
+        bottomPanel.getChildren().add(inputWrapper);
 
-        JPopupMenu faqMenu = new JPopupMenu();
-        JMenuItem faq1 = new JMenuItem("Jadwal ibadah?");
-        JMenuItem faq2 = new JMenuItem("Agenda kegiatan?");
-        JMenuItem faq3 = new JMenuItem("Alamat gereja?");
-        
-        faqMenu.add(faq1); faqMenu.add(faq2); faqMenu.add(faq3);
+        btnSend.setOnAction(e -> processUserInput(inputField.getText()));
+        inputField.setOnAction(e -> processUserInput(inputField.getText()));
+        // 4. SIDEBAR (Kiri)
+        VBox sidebar = new VBox(10);
+        sidebar.setStyle("-fx-background-color: #f5f5f5;");
+        sidebar.setPrefWidth(200);
+        sidebar.setPadding(new Insets(20, 10, 10, 10));
 
-        btnMenu.addActionListener(e -> faqMenu.show(btnMenu, 0, -faqMenu.getPreferredSize().height));
+        Button btnNewChat = createSidebarButton("PERCAKAPAN BARU", true);
+        Button btnSearchChat = createSidebarButton("BACA ALKITAB", false);
 
-        faq1.addActionListener(e -> processUserInput("jadwal ibadah"));
-        faq2.addActionListener(e -> processUserInput("kegiatan"));
-        faq3.addActionListener(e -> processUserInput("alamat gereja"));
+        btnSearchChat.setOnAction(e -> {
+            btnSearchChat.setStyle("-fx-background-color: #c8d2f0; -fx-background-radius: 5;");
+            btnNewChat.setStyle("-fx-background-color: white; -fx-background-radius: 5;");
+            mainPanel.setCenter(createBibleView());
+            mainPanel.setBottom(null);
+        });
 
-        inputField = new JTextField();
-        inputField.setBorder(new EmptyBorder(0, 10, 0, 10));
-        inputField.setFont(new Font("Segoe UI", Font.PLAIN, 14));
+        btnNewChat.setOnAction(e -> {
+            btnNewChat.setStyle("-fx-background-color: #c8d2f0; -fx-background-radius: 5;");
+            btnSearchChat.setStyle("-fx-background-color: white; -fx-background-radius: 5;");
+            mainPanel.setCenter(scrollPane);
+            mainPanel.setBottom(bottomPanel);
+        });
 
-        JButton btnSend = new JButton("↑");
-        btnSend.setFont(new Font("Arial", Font.BOLD, 16));
-        btnSend.setBackground(new Color(230, 230, 230));
+        sidebar.getChildren().addAll(btnNewChat, btnSearchChat);
 
-        inputWrapper.add(btnMenu, BorderLayout.WEST);
-        inputWrapper.add(inputField, BorderLayout.CENTER);
-        inputWrapper.add(btnSend, BorderLayout.EAST);
+        // MENGGABUNGKAN
+        mainPanel.setTop(header);
+        mainPanel.setLeft(sidebar);
+        mainPanel.setCenter(scrollPane);
+        mainPanel.setBottom(bottomPanel);
 
-        bottomPanel.add(inputWrapper, BorderLayout.CENTER);
-
-        btnSend.addActionListener(e -> processUserInput(inputField.getText()));
-        inputField.addActionListener(e -> processUserInput(inputField.getText()));
-
-        // ==========================================
-        // GABUNGKAN SEMUA
-        // ==========================================
-        mainPanel.add(header, BorderLayout.NORTH);
-        mainPanel.add(sidebar, BorderLayout.WEST);
-        mainPanel.add(scrollPane, BorderLayout.CENTER);
-        mainPanel.add(bottomPanel, BorderLayout.SOUTH);
-
-        setContentPane(mainPanel);
-        setVisible(true);
+        Scene scene = new Scene(mainPanel, 950, 650);
+        primaryStage.setScene(scene);
+        primaryStage.show();
     }
 
-    // ==========================================
-    // LOGIKA CHAT KIRI-KANAN (CHAT BUBBLE)
-    // ==========================================
+    private VBox createBibleView() {
+        VBox bibleLayout = new VBox(15);
+        bibleLayout.setPadding(new Insets(20));
+        bibleLayout.setStyle("-fx-background-color: white;");
+
+        Label title = new Label("Baca Alkitab");
+        title.setFont(Font.font("Segoe UI", FontWeight.BOLD, 20));
+
+        HBox comboContainer = new HBox(10);
+
+        ComboBox<String> comboKitab = new ComboBox<>();
+        // Memuat data kitab langsung saat panel dibuat
+        List<String> listKitab = alkitabDAO.getAllKitab();
+        comboKitab.getItems().addAll(listKitab);
+        comboKitab.setPromptText("Pilih Kitab");
+
+        ComboBox<Integer> comboPasal = new ComboBox<>();
+        comboPasal.setPromptText("Pasal");
+
+        ComboBox<Integer> comboAyat = new ComboBox<>();
+        comboAyat.setPromptText("Ayat");
+
+        // Listener Kitab -> Pasal
+        comboKitab.setOnAction(e -> {
+            String selected = comboKitab.getValue();
+            if (selected != null) {
+                comboPasal.getItems().setAll(alkitabDAO.getPasalByKitab(selected));
+                comboAyat.getItems().clear();
+            }
+        });
+
+        // Listener Pasal -> Ayat
+        comboPasal.setOnAction(e -> {
+            String kit = comboKitab.getValue();
+            Integer pas = comboPasal.getValue();
+            if (kit != null && pas != null) {
+                comboAyat.getItems().setAll(alkitabDAO.getAyatByKitabAndPasal(kit, pas));
+            }
+        });
+
+        Button btnCari = new Button("Tampilkan");
+        btnCari.setStyle("-fx-background-color: #4a3bcc; -fx-text-fill: white; -fx-cursor: hand;");
+
+        comboContainer.getChildren().addAll(comboKitab, comboPasal, comboAyat, btnCari);
+
+        TextArea txtAyat = new TextArea();
+        txtAyat.setEditable(false);
+        txtAyat.setWrapText(true);
+        txtAyat.setFont(Font.font("Segoe UI", 16));
+        VBox.setVgrow(txtAyat, Priority.ALWAYS);
+
+        btnCari.setOnAction(e -> {
+            String k = comboKitab.getValue();
+            Integer p = comboPasal.getValue();
+            Integer a = comboAyat.getValue();
+            if (k != null && p != null && a != null) {
+                txtAyat.setText(alkitabDAO.getFirman(k, p, a));
+            } else {
+                txtAyat.setText("Pilih Kitab, Pasal, dan Ayat!");
+            }
+        });
+
+        bibleLayout.getChildren().addAll(title, comboContainer, txtAyat);
+        return bibleLayout;
+    }
+
     private void processUserInput(String text) {
-        text = text.trim();
-        if (!text.isEmpty()) {
-            // 1. Tampilkan pesan User di KANAN
+        if (!text.trim().isEmpty()) {
             addChatBubble(text, true);
-            inputField.setText("");
-
-            // 2. Panggil ChatService
-            String balasan = chatManager.sendMessage(text);
-
-            // 3. Tampilkan pesan Bot di KIRI
-            addChatBubble(balasan, false);
+            inputField.clear();
+            addChatBubble(chatManager.sendMessage(text), false);
         }
     }
 
     private void addChatBubble(String message, boolean isUser) {
-        // Baris wadah untuk satu bubble
-        JPanel rowPanel = new JPanel();
-        rowPanel.setLayout(new BoxLayout(rowPanel, BoxLayout.X_AXIS));
-        rowPanel.setBackground(Color.WHITE);
-        rowPanel.setBorder(new EmptyBorder(5, 5, 5, 5));
+        HBox row = new HBox();
+        row.setPadding(new Insets(5));
+        Label label = new Label(message);
+        label.setWrapText(true);
+        label.setMaxWidth(500);
+        label.setPadding(new Insets(10, 15, 10, 15));
+        label.setFont(Font.font("Segoe UI", 14));
 
-        // Area teks bubble
-        JTextArea bubbleText = new JTextArea(message);
-        bubbleText.setEditable(false);
-        bubbleText.setLineWrap(true);
-        bubbleText.setWrapStyleWord(true);
-        bubbleText.setMargin(new Insets(10, 15, 10, 15));
-        bubbleText.setFont(new Font("Segoe UI", Font.PLAIN, 14));
-
-        // Styling dan Posisi Kiri/Kanan
         if (isUser) {
-            bubbleText.setBackground(new Color(200, 220, 255)); // Biru muda untuk User
-            rowPanel.add(Box.createHorizontalGlue()); // Mendorong bubble ke kanan
-            rowPanel.add(bubbleText);
+            label.setStyle("-fx-background-color: #c8dcff; -fx-background-radius: 15;");
+            row.setAlignment(Pos.CENTER_RIGHT);
         } else {
-            bubbleText.setBackground(new Color(240, 240, 240)); // Abu-abu muda untuk Bot
-            rowPanel.add(bubbleText);
-            rowPanel.add(Box.createHorizontalGlue()); // Mendorong bubble ke kiri
+            label.setStyle("-fx-background-color: #f0f0f0; -fx-background-radius: 15;");
+            row.setAlignment(Pos.CENTER_LEFT);
         }
-
-        // Membatasi lebar maksimum bubble agar teksnya bisa "turun/wrap" ke bawah
-        int maxWidth = 500;
-        bubbleText.setSize(new Dimension(maxWidth, Short.MAX_VALUE));
-        int preferredHeight = bubbleText.getPreferredSize().height;
-        int preferredWidth = Math.min(maxWidth, bubbleText.getPreferredSize().width + 30);
-        bubbleText.setMaximumSize(new Dimension(preferredWidth, preferredHeight));
-
-        // Masukkan ke Panel Utama
-        chatPanel.add(rowPanel);
-        chatPanel.revalidate();
-        chatPanel.repaint();
-
-        // Otomatis scroll ke bagian paling bawah
-        SwingUtilities.invokeLater(() -> {
-            JScrollBar vertical = scrollPane.getVerticalScrollBar();
-            vertical.setValue(vertical.getMaximum());
-        });
+        row.getChildren().add(label);
+        chatPanel.getChildren().add(row);
     }
 
-    private JButton createSidebarButton(String text, boolean isActive) {
-        JButton btn = new JButton(text);
-        btn.setAlignmentX(Component.CENTER_ALIGNMENT);
-        btn.setMaximumSize(new Dimension(180, 35));
-        btn.setFocusPainted(false);
-        btn.setBackground(isActive ? new Color(200, 210, 240) : Color.WHITE);
+    private Button createSidebarButton(String text, boolean isActive) {
+        Button btn = new Button(text);
+        btn.setMaxWidth(Double.MAX_VALUE);
+        btn.setPrefHeight(35);
+        btn.setStyle("-fx-background-color: " + (isActive ? "#c8d2f0" : "white") + "; -fx-background-radius: 5;");
         return btn;
     }
 }
