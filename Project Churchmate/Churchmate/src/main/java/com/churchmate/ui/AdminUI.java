@@ -46,12 +46,22 @@ public class AdminUI {
     private ManageDataController controller;
     private BorderPane mainContent;
     private String currentView = "GEREJA";
+    private com.churchmate.service.AuthService authService;
+    private LoginUi loginUi;
 
     public AdminUI() {
     }
 
     public void setController(ManageDataController controller) {
         this.controller = controller;
+    }
+
+    public void setAuthService(com.churchmate.service.AuthService authService) {
+        this.authService = authService;
+    }
+
+    public void setLoginUi(LoginUi loginUi) {
+        this.loginUi = loginUi;
     }
 
     // Method sesuai UML
@@ -83,7 +93,14 @@ public class AdminUI {
         btnLogout.setStyle(
                 "-fx-background-color: #ffffff; -fx-text-fill: #4b3cc8; -fx-font-weight: bold; -fx-cursor: hand;");
         btnLogout.setOnAction(e -> {
-            Platform.exit();
+            if (authService != null) {
+                authService.logout();
+            }
+            if (loginUi != null) {
+                loginUi.showLoginfForm(primaryStage);
+            } else {
+                Platform.exit();
+            }
         });
 
         header.getChildren().addAll(titleLabel, headerSpacer, btnLogout);
@@ -94,7 +111,7 @@ public class AdminUI {
         sidebar.setPrefWidth(200);
         sidebar.setPadding(new Insets(20, 10, 10, 10));
 
-        String[] menus = { "DATA GEREJA", "DATA IBADAH", "DATA KEGIATAN", "PENGATURAN" };
+        String[] menus = { "DATA GEREJA", "DATA IBADAH", "DATA KEGIATAN"}; //, "PENGATURAN" };
         for (String menu : menus) {
             Button menuBtn = new Button(menu);
             menuBtn.setMaxWidth(Double.MAX_VALUE);
@@ -115,10 +132,10 @@ public class AdminUI {
                         currentView = "KEGIATAN";
                         showKegiatanTable();
                         break;
-                    case "PENGATURAN":
-                        currentView = "PENGATURAN";
-                        showPengaturanPanel();
-                        break;
+//                    case "PENGATURAN":
+//                        currentView = "PENGATURAN";
+//                        showPengaturanPanel();
+//                        break;
                 }
             });
             sidebar.getChildren().add(menuBtn);
@@ -785,22 +802,22 @@ public class AdminUI {
     // ==========================================
     // PANEL PENGATURAN
     // ==========================================
-    private void showPengaturanPanel() {
-        BorderPane panel = new BorderPane();
-        panel.setStyle("-fx-background-color: white;");
-        panel.setPadding(new Insets(20));
-
-        Label label = new Label("PENGATURAN");
-        label.setFont(Font.font("Arial", FontWeight.BOLD, 18));
-        panel.setTop(label);
-
-        Label info = new Label("\nHalaman pengaturan akan tersedia di versi berikutnya.");
-        info.setFont(Font.font("Arial", 14));
-        panel.setCenter(info);
-
-        mainContent.setCenter(panel);
-        mainContent.setTop(null); // Clear header for this page
-    }
+//    private void showPengaturanPanel() {
+//        BorderPane panel = new BorderPane();
+//        panel.setStyle("-fx-background-color: white;");
+//        panel.setPadding(new Insets(20));
+//
+//        Label label = new Label("PENGATURAN");
+//        label.setFont(Font.font("Arial", FontWeight.BOLD, 18));
+//        panel.setTop(label);
+//
+//        Label info = new Label("\nHalaman pengaturan akan tersedia di versi berikutnya.");
+//        info.setFont(Font.font("Arial", 14));
+//        panel.setCenter(info);
+//
+//        mainContent.setCenter(panel);
+//        mainContent.setTop(null); // Clear header for this page
+//    }
 
     private void showErrorAlert(String message) {
         Alert alert = new Alert(Alert.AlertType.ERROR);
