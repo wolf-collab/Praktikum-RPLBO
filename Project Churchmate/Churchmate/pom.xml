@@ -9,6 +9,8 @@
     <url>https://maven.apache.org</url>
     <properties>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
+        <maven.compiler.source>17</maven.compiler.source>
+        <maven.compiler.target>17</maven.compiler.target>
     </properties>
     <dependencies>
         <dependency>
@@ -45,6 +47,15 @@
                 <version>0.0.8</version>
                 <configuration>
                     <mainClass>com.churchmate.App</mainClass>
+                </configuration>
+            </plugin>
+            <plugin>
+                <groupId>org.codehaus.mojo</groupId>
+                <artifactId>exec-maven-plugin</artifactId>
+                <version>3.1.0</version>
+                <configuration>
+                    <mainClass>com.churchmate.Main</mainClass>
+                    <commandlineArgs>--add-modules javafx.controls,javafx.graphics,javafx.base</commandlineArgs>
                 </configuration>
             </plugin>
         </plugins>

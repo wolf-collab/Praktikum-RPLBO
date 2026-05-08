@@ -1,0 +1,19 @@
+{
+    "version": "0.2.0",
+    "configurations": [
+        {
+            "type": "java",
+            "name": "Run Churchmate (Main)",
+            "request": "launch",
+            "mainClass": "com.churchmate.Main",
+            "projectName": "Churchmate"
+        },
+        {
+            "type": "java",
+            "name": "Run Churchmate (App)",
+            "request": "launch",
+            "mainClass": "com.churchmate.App",
+            "projectName": "Churchmate"
+        }
+    ]
+}
