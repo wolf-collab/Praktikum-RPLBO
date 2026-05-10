@@ -20,6 +20,10 @@ public class LoginUi {
         this.manageDataController = manageDataController;
     }
 
+    public ManageDataController getManageDataController() {
+        return manageDataController;
+    }
+
     public void showLoginfForm(Stage stage) {
         Label title = new Label("Login Admin");
 

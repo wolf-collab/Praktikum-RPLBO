@@ -22,10 +22,16 @@ public class App extends Application {
         ManageDataController manageDataController = new ManageDataController(manageDataService);
 
         AuthService authService = new AuthService(db.getUserDAO());
+        LoginUi loginUi = new LoginUi(authService, manageDataController);
 
-        LoginUi loginUI = new LoginUi(authService, manageDataController);
-        loginUI.showLoginfForm(primaryStage);
+        ChatService chatService = new ChatService(db);
+        ChatManager chatManager = new ChatManager(chatService);
+
+        // Langsung buka chatbot, bukan halaman login
+        UserUI userUI = new UserUI(chatManager, authService, loginUi);
+        userUI.showChatInterface(primaryStage);
     }
+
     public static void main(String[] args) {
         launch(args);
     }

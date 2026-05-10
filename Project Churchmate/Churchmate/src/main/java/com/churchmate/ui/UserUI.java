@@ -1,7 +1,9 @@
 package com.churchmate.ui;
 
 import com.churchmate.controller.ChatManager;
+import com.churchmate.controller.ManageDataController;
 import com.churchmate.dao.AlkitabDAO;
+import com.churchmate.service.AuthService;
 import javafx.geometry.Insets;
 import javafx.geometry.Pos;
 import javafx.geometry.Side;
@@ -24,15 +26,25 @@ public class UserUI {
     private TextField inputField;
 
     private final ChatManager chatManager;
+    private final AuthService authService;
+    private final LoginUi loginUi;
     // Buat satu instance DAO agar CSV hanya dibaca satu kali saat aplikasi buka
     private final AlkitabDAO alkitabDAO = new AlkitabDAO();
 
+    /** Constructor lama (tanpa fitur admin login) */
     public UserUI(ChatManager chatManager) {
+        this(chatManager, null, null);
+    }
+
+    /** Constructor baru dengan dukungan admin login dari dalam chatbot */
+    public UserUI(ChatManager chatManager, AuthService authService, LoginUi loginUi) {
         this.chatManager = chatManager;
+        this.authService = authService;
+        this.loginUi = loginUi;
     }
 
     public void showChatInterface(Stage primaryStage) {
-        primaryStage.setTitle("Churchmate - User Chatbot");
+        primaryStage.setTitle("Churchmate - Chatbot Gereja");
 
         mainPanel = new BorderPane();
         // 1. HEADER
@@ -129,6 +141,132 @@ public class UserUI {
         });
 
         sidebar.getChildren().addAll(btnNewChat, btnSearchChat);
+
+        // 5. PANEL LOGIN ADMIN (hanya muncul jika authService tersedia)
+        if (authService != null) {
+            Region spacer = new Region();
+            VBox.setVgrow(spacer, Priority.ALWAYS);
+
+            // Panel login yang tersembunyi, muncul saat tombol diklik
+            VBox loginPanel = new VBox(8);
+            loginPanel.setStyle(
+                "-fx-background-color: #eef0ff; " +
+                "-fx-border-color: #4a3bcc; " +
+                "-fx-border-radius: 8; " +
+                "-fx-background-radius: 8;"
+            );
+            loginPanel.setPadding(new Insets(12));
+            loginPanel.setVisible(false);
+            loginPanel.setManaged(false);
+
+            Label loginTitle = new Label("🔐 Login Admin");
+            loginTitle.setFont(Font.font("Segoe UI", FontWeight.BOLD, 13));
+            loginTitle.setTextFill(Color.web("#4a3bcc"));
+
+            TextField usernameField = new TextField();
+            usernameField.setPromptText("Username");
+            usernameField.setStyle(
+                "-fx-background-color: white; " +
+                "-fx-border-color: #c0c8f0; " +
+                "-fx-border-radius: 5; " +
+                "-fx-background-radius: 5; " +
+                "-fx-padding: 6;"
+            );
+
+            PasswordField passwordField = new PasswordField();
+            passwordField.setPromptText("Password");
+            passwordField.setStyle(
+                "-fx-background-color: white; " +
+                "-fx-border-color: #c0c8f0; " +
+                "-fx-border-radius: 5; " +
+                "-fx-background-radius: 5; " +
+                "-fx-padding: 6;"
+            );
+
+            Label errorLabel = new Label("");
+            errorLabel.setTextFill(Color.RED);
+            errorLabel.setFont(Font.font("Segoe UI", 11));
+            errorLabel.setWrapText(true);
+
+            Button btnMasuk = new Button("Masuk");
+            btnMasuk.setMaxWidth(Double.MAX_VALUE);
+            btnMasuk.setStyle(
+                "-fx-background-color: #4a3bcc; " +
+                "-fx-text-fill: white; " +
+                "-fx-background-radius: 5; " +
+                "-fx-cursor: hand; " +
+                "-fx-padding: 7 0 7 0;"
+            );
+
+            btnMasuk.setOnAction(e -> {
+                String username = usernameField.getText().trim();
+                String password = passwordField.getText();
+                if (username.isEmpty() || password.isEmpty()) {
+                    errorLabel.setText("Username dan password tidak boleh kosong.");
+                    return;
+                }
+                if (authService.login(username, password)) {
+                    // Buka AdminUI di stage yang sama
+                    AdminUI adminUI = new AdminUI();
+                    ManageDataController ctrl = loginUi.getManageDataController();
+                    adminUI.setController(ctrl);
+                    adminUI.setAuthService(authService);
+                    adminUI.setLoginUi(loginUi);
+
+                    // Buat stage baru untuk admin agar chatbot bisa tetap tersedia
+                    Stage adminStage = new Stage();
+                    adminUI.showDashboard(adminStage);
+
+                    // Reset form login setelah berhasil
+                    usernameField.clear();
+                    passwordField.clear();
+                    errorLabel.setText("");
+                    loginPanel.setVisible(false);
+                    loginPanel.setManaged(false);
+                } else {
+                    errorLabel.setText("❌ Username atau password salah.");
+                    passwordField.clear();
+                }
+            });
+
+            loginPanel.getChildren().addAll(loginTitle, usernameField, passwordField, errorLabel, btnMasuk);
+
+            // Tombol toggle login admin di bagian bawah sidebar
+            Button btnAdminLogin = new Button("🔑  Login Admin");
+            btnAdminLogin.setMaxWidth(Double.MAX_VALUE);
+            btnAdminLogin.setPrefHeight(35);
+            btnAdminLogin.setStyle(
+                "-fx-background-color: #4a3bcc; " +
+                "-fx-text-fill: white; " +
+                "-fx-background-radius: 5; " +
+                "-fx-cursor: hand;"
+            );
+
+            btnAdminLogin.setOnAction(e -> {
+                boolean nowVisible = !loginPanel.isVisible();
+                loginPanel.setVisible(nowVisible);
+                loginPanel.setManaged(nowVisible);
+                if (nowVisible) {
+                    btnAdminLogin.setText("✕  Tutup Login");
+                    btnAdminLogin.setStyle(
+                        "-fx-background-color: #8a7de6; " +
+                        "-fx-text-fill: white; " +
+                        "-fx-background-radius: 5; " +
+                        "-fx-cursor: hand;"
+                    );
+                } else {
+                    btnAdminLogin.setText("🔑  Login Admin");
+                    btnAdminLogin.setStyle(
+                        "-fx-background-color: #4a3bcc; " +
+                        "-fx-text-fill: white; " +
+                        "-fx-background-radius: 5; " +
+                        "-fx-cursor: hand;"
+                    );
+                }
+            });
+
+            sidebar.getChildren().addAll(spacer, loginPanel, btnAdminLogin);
+        }
 
         // MENGGABUNGKAN
         mainPanel.setTop(header);
@@ -243,3 +381,4 @@ public class UserUI {
         return btn;
     }
 }
+
