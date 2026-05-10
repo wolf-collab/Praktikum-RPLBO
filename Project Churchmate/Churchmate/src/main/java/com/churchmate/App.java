@@ -27,7 +27,6 @@ public class App extends Application {
         ChatService chatService = new ChatService(db);
         ChatManager chatManager = new ChatManager(chatService);
 
-        // Langsung buka chatbot, bukan halaman login
         UserUI userUI = new UserUI(chatManager, authService, loginUi);
         userUI.showChatInterface(primaryStage);
     }

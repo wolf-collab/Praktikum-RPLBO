@@ -193,8 +193,8 @@ public class ChatService {
         }
 
         if (query.contains("lokasi") || query.contains("dimana") || query.contains("di mana")) {
-            return ibadah.getNamaibadah() +
-                    " dilaksanakan di " + ibadah.getLokasi() + ".";
+            return ibadah.getNamaibadah() + " pada tanggal " +
+                    ibadah.getTglIbadah() + " dilaksanakan di " + ibadah.getLokasi() + ".";
         }
 
         return ibadah.getUpcoming();
@@ -277,8 +277,8 @@ public class ChatService {
         }
 
         if (query.contains("lokasi") || query.contains("dimana") || query.contains("di mana")) {
-            return "Kegiatan " + kegiatan.getJudul() +
-                    " dilaksanakan di " + kegiatan.getLokasi() + ".";
+            return kegiatan.getJudul() + " pada tanggal " +
+                    kegiatan.getTanggal() + " dilaksanakan di " + kegiatan.getLokasi() + ".";
         }
 
         if (query.contains("kategori")) {

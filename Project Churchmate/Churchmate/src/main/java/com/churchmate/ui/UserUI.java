@@ -212,6 +212,7 @@ public class UserUI {
                     adminUI.setController(ctrl);
                     adminUI.setAuthService(authService);
                     adminUI.setLoginUi(loginUi);
+                    adminUI.setUserUI(this);
 
                     // Buat stage baru untuk admin agar chatbot bisa tetap tersedia
                     Stage adminStage = new Stage();

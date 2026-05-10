@@ -48,6 +48,7 @@ public class AdminUI {
     private String currentView = "GEREJA";
     private com.churchmate.service.AuthService authService;
     private LoginUi loginUi;
+    private UserUI userUI;
 
     public AdminUI() {
     }
@@ -64,9 +65,12 @@ public class AdminUI {
         this.loginUi = loginUi;
     }
 
+    public void setUserUI(UserUI userUI) {
+        this.userUI = userUI;
+    }
+
     // Method sesuai UML
     public void showLoginForm() {
-        // Logika menampilkan panel login
     }
 
     // Method sesuai UML
@@ -96,11 +100,8 @@ public class AdminUI {
             if (authService != null) {
                 authService.logout();
             }
-            if (loginUi != null) {
-                loginUi.showLoginfForm(primaryStage);
-            } else {
-                Platform.exit();
-            }
+            // Tutup hanya jendela admin; UserUI tetap berjalan di background
+            primaryStage.close();
         });
 
         header.getChildren().addAll(titleLabel, headerSpacer, btnLogout);
@@ -111,7 +112,7 @@ public class AdminUI {
         sidebar.setPrefWidth(200);
         sidebar.setPadding(new Insets(20, 10, 10, 10));
 
-        String[] menus = { "DATA GEREJA", "DATA IBADAH", "DATA KEGIATAN"}; //, "PENGATURAN" };
+        String[] menus = { "DATA GEREJA", "DATA IBADAH", "DATA KEGIATAN" }; // , "PENGATURAN" };
         for (String menu : menus) {
             Button menuBtn = new Button(menu);
             menuBtn.setMaxWidth(Double.MAX_VALUE);
@@ -132,10 +133,10 @@ public class AdminUI {
                         currentView = "KEGIATAN";
                         showKegiatanTable();
                         break;
-//                    case "PENGATURAN":
-//                        currentView = "PENGATURAN";
-//                        showPengaturanPanel();
-//                        break;
+                    // case "PENGATURAN":
+                    // currentView = "PENGATURAN";
+                    // showPengaturanPanel();
+                    // break;
                 }
             });
             sidebar.getChildren().add(menuBtn);
@@ -802,22 +803,23 @@ public class AdminUI {
     // ==========================================
     // PANEL PENGATURAN
     // ==========================================
-//    private void showPengaturanPanel() {
-//        BorderPane panel = new BorderPane();
-//        panel.setStyle("-fx-background-color: white;");
-//        panel.setPadding(new Insets(20));
-//
-//        Label label = new Label("PENGATURAN");
-//        label.setFont(Font.font("Arial", FontWeight.BOLD, 18));
-//        panel.setTop(label);
-//
-//        Label info = new Label("\nHalaman pengaturan akan tersedia di versi berikutnya.");
-//        info.setFont(Font.font("Arial", 14));
-//        panel.setCenter(info);
-//
-//        mainContent.setCenter(panel);
-//        mainContent.setTop(null); // Clear header for this page
-//    }
+    // private void showPengaturanPanel() {
+    // BorderPane panel = new BorderPane();
+    // panel.setStyle("-fx-background-color: white;");
+    // panel.setPadding(new Insets(20));
+    //
+    // Label label = new Label("PENGATURAN");
+    // label.setFont(Font.font("Arial", FontWeight.BOLD, 18));
+    // panel.setTop(label);
+    //
+    // Label info = new Label("\nHalaman pengaturan akan tersedia di versi
+    // berikutnya.");
+    // info.setFont(Font.font("Arial", 14));
+    // panel.setCenter(info);
+    //
+    // mainContent.setCenter(panel);
+    // mainContent.setTop(null); // Clear header for this page
+    // }
 
     private void showErrorAlert(String message) {
         Alert alert = new Alert(Alert.AlertType.ERROR);
@@ -825,35 +827,5 @@ public class AdminUI {
         alert.setHeaderText(null);
         alert.setContentText(message);
         alert.showAndWait();
-    }}
-
-    
-    
-    
-
-    
-
-    
-
-    
-    
-        
-            
-                
-                
-                
-
-                
-                        
-            
-                
-            
-        
-        
-    
-
-    
-    
-        
-        
-    
+    }
+}
