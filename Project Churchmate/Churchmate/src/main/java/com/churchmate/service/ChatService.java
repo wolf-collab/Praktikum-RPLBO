@@ -3,6 +3,7 @@ package com.churchmate.service;
 import com.churchmate.model.Gereja;
 import com.churchmate.model.Ibadah;
 import com.churchmate.model.Kegiatan;
+import com.churchmate.dao.RenunganDAO;
 
 import java.time.LocalDate;
 import java.util.ArrayList;
@@ -28,6 +29,10 @@ public class ChatService {
         } else if (query.contains("gereja") || query.contains("alamat") || query.contains("kontak")
                 || query.contains("telepon") || query.contains("email") || query.contains("website")) {
             return handleGerejaQuery(query);
+            // --- TAMBAHKAN BAGIAN INI ---
+        } else if (query.contains("renungan") || query.contains("firman")) {
+            RenunganDAO renunganDAO = new RenunganDAO();
+            return renunganDAO.getRenunganHariIni();
         }
 
         List<Object> data = db.findAll();

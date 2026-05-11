@@ -97,11 +97,13 @@ public class UserUI {
         ContextMenu faqMenu = new ContextMenu();
         MenuItem faq1 = new MenuItem("Jadwal ibadah?");
         MenuItem faq2 = new MenuItem("Agenda kegiatan?");
-        faqMenu.getItems().addAll(faq1, faq2);
+        MenuItem faq3 = new MenuItem("Baca Renungan Firman Hari Ini");
+        faqMenu.getItems().addAll(faq1, faq2, faq3);
         btnMenu.setOnAction(e -> faqMenu.show(btnMenu, Side.TOP, 0, 0));
 
         faq1.setOnAction(e -> processUserInput("jadwal ibadah"));
         faq2.setOnAction(e -> processUserInput("kegiatan"));
+        faq3.setOnAction(e -> processUserInput("renungan"));
 
         inputField = new TextField();
         inputField.setStyle("-fx-background-color: transparent; -fx-border-color: transparent;");
@@ -382,4 +384,4 @@ public class UserUI {
         return btn;
     }
 }
-
+

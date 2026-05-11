@@ -4,6 +4,7 @@ import com.churchmate.controller.ManageDataController;
 import com.churchmate.model.Gereja;
 import com.churchmate.model.Ibadah;
 import com.churchmate.model.Kegiatan;
+import com.churchmate.model.Renungan;
 import com.churchmate.service.DatabaseService;
 import com.churchmate.service.ManageDataService;
 
@@ -14,16 +15,7 @@ import javafx.collections.ObservableList;
 import javafx.geometry.Insets;
 import javafx.geometry.Pos;
 import javafx.scene.Scene;
-import javafx.scene.control.Alert;
-import javafx.scene.control.Button;
-import javafx.scene.control.ButtonBar;
-import javafx.scene.control.ButtonType;
-import javafx.scene.control.Dialog;
-import javafx.scene.control.Label;
-import javafx.scene.control.TableCell;
-import javafx.scene.control.TableColumn;
-import javafx.scene.control.TableView;
-import javafx.scene.control.TextField;
+import javafx.scene.control.*;
 import javafx.scene.control.cell.PropertyValueFactory;
 import javafx.scene.layout.BorderPane;
 import javafx.scene.layout.GridPane;
@@ -112,7 +104,7 @@ public class AdminUI {
         sidebar.setPrefWidth(200);
         sidebar.setPadding(new Insets(20, 10, 10, 10));
 
-        String[] menus = { "DATA GEREJA", "DATA IBADAH", "DATA KEGIATAN" }; // , "PENGATURAN" };
+        String[] menus = { "DATA GEREJA", "DATA IBADAH", "DATA KEGIATAN", "DATA RENUNGAN" }; // , "PENGATURAN" };
         for (String menu : menus) {
             Button menuBtn = new Button(menu);
             menuBtn.setMaxWidth(Double.MAX_VALUE);
@@ -132,6 +124,10 @@ public class AdminUI {
                     case "DATA KEGIATAN":
                         currentView = "KEGIATAN";
                         showKegiatanTable();
+                        break;
+                    case "DATA RENUNGAN":
+                        currentView = "RENUNGAN";
+                        showRenunganTable();
                         break;
                     // case "PENGATURAN":
                     // currentView = "PENGATURAN";
@@ -827,5 +823,188 @@ public class AdminUI {
         alert.setHeaderText(null);
         alert.setContentText(message);
         alert.showAndWait();
+    }
+
+    // ==========================================
+    // TAMPILKAN TABEL DATA RENUNGAN
+    // ==========================================
+    private void showRenunganTable() {
+        BorderPane topPanel = new BorderPane();
+        topPanel.setStyle("-fx-background-color: white;");
+        topPanel.setPadding(new Insets(10));
+
+        Label contentTitle = new Label(" DATA RENUNGAN");
+        contentTitle.setFont(Font.font("Arial", FontWeight.BOLD, 18));
+        topPanel.setLeft(contentTitle);
+
+        Button btnTambah = new Button("+ TAMBAH RENUNGAN");
+        btnTambah.setStyle("-fx-background-color: #4b3cc8; -fx-text-fill: white; -fx-cursor: hand; -fx-font-weight: bold;");
+        btnTambah.setOnAction(e -> showAddRenunganDialog());
+        topPanel.setRight(btnTambah);
+
+        mainContent.setTop(topPanel);
+
+        TableView<Renungan> table = new TableView<>();
+
+        TableColumn<Renungan, Integer> colId = new TableColumn<>("ID");
+        colId.setCellValueFactory(new PropertyValueFactory<>("id"));
+        colId.setPrefWidth(50);
+
+        TableColumn<Renungan, String> colTanggal = new TableColumn<>("Tanggal");
+        colTanggal.setCellValueFactory(new PropertyValueFactory<>("tanggal"));
+        colTanggal.setPrefWidth(100);
+
+        TableColumn<Renungan, String> colJudul = new TableColumn<>("Judul");
+        colJudul.setCellValueFactory(new PropertyValueFactory<>("judul"));
+        colJudul.setPrefWidth(150);
+
+        TableColumn<Renungan, String> colAyat = new TableColumn<>("Ayat Referensi");
+        colAyat.setCellValueFactory(new PropertyValueFactory<>("ayatReferensi"));
+        colAyat.setPrefWidth(150);
+
+        TableColumn<Renungan, String> colIsi = new TableColumn<>("Isi Renungan");
+        colIsi.setCellValueFactory(new PropertyValueFactory<>("isiRenungan"));
+        colIsi.setPrefWidth(200);
+
+        TableColumn<Renungan, Void> colAksi = new TableColumn<>("Aksi");
+        colAksi.setPrefWidth(150);
+        colAksi.setCellFactory(param -> new TableCell<>() {
+            private final Button btnUbah = new Button("Ubah");
+            private final Button btnHapus = new Button("Hapus");
+            private final HBox pane = new HBox(5, btnUbah, btnHapus);
+
+            {
+                btnUbah.setStyle("-fx-background-color: #4CAF50; -fx-text-fill: white; -fx-cursor: hand;");
+                btnHapus.setStyle("-fx-background-color: #f44336; -fx-text-fill: white; -fx-cursor: hand;");
+
+                btnUbah.setOnAction(event -> {
+                    Renungan r = getTableView().getItems().get(getIndex());
+                    showEditRenunganDialog(r);
+                });
+
+                btnHapus.setOnAction(event -> {
+                    Renungan r = getTableView().getItems().get(getIndex());
+                    confirmDeleteRenungan(r);
+                });
+            }
+
+            @Override
+            protected void updateItem(Void item, boolean empty) {
+                super.updateItem(item, empty);
+                setGraphic(empty ? null : pane);
+            }
+        });
+
+        table.getColumns().addAll(colId, colTanggal, colJudul, colAyat, colIsi, colAksi);
+
+        // Memanggil data dari controller
+        List<Renungan> list = controller.getAllRenungan();
+        ObservableList<Renungan> data = FXCollections.observableArrayList(list);
+        table.setItems(data);
+
+        mainContent.setCenter(table);
+    }
+
+    private void showAddRenunganDialog() {
+        Dialog<Renungan> dialog = new Dialog<>();
+        dialog.setTitle("Tambah Renungan");
+        dialog.setHeaderText("Masukkan detail renungan baru.");
+
+        ButtonType simpanButtonType = new ButtonType("Simpan", ButtonBar.ButtonData.OK_DONE);
+        dialog.getDialogPane().getButtonTypes().addAll(simpanButtonType, ButtonType.CANCEL);
+
+        GridPane grid = new GridPane();
+        grid.setHgap(10);
+        grid.setVgap(10);
+        grid.setPadding(new Insets(20, 150, 10, 10));
+
+        TextField tfTanggal = new TextField(LocalDate.now().toString()); // Default hari ini
+        TextField tfJudul = new TextField();
+        TextField tfAyat = new TextField();
+        TextArea tfIsi = new TextArea();
+        tfIsi.setPrefRowCount(5);
+        tfIsi.setWrapText(true);
+
+        grid.add(new Label("Tanggal (yyyy-MM-dd):"), 0, 0);
+        grid.add(tfTanggal, 1, 0);
+        grid.add(new Label("Judul:"), 0, 1);
+        grid.add(tfJudul, 1, 1);
+        grid.add(new Label("Ayat Referensi:"), 0, 2);
+        grid.add(tfAyat, 1, 2);
+        grid.add(new Label("Isi Renungan:"), 0, 3);
+        grid.add(tfIsi, 1, 3);
+
+        dialog.getDialogPane().setContent(grid);
+
+        dialog.setResultConverter(dialogButton -> {
+            if (dialogButton == simpanButtonType) {
+                // Return objek baru (ID diset 0 dulu karena AutoIncrement di DB)
+                return new Renungan(tfTanggal.getText(), tfJudul.getText(), tfAyat.getText(), tfIsi.getText());
+            }
+            return null;
+        });
+
+        dialog.showAndWait().ifPresent(r -> {
+            controller.addRenungan(r);
+            showRenunganTable(); // Refresh tabel
+        });
+    }
+
+    private void showEditRenunganDialog(Renungan existing) {
+        Dialog<Renungan> dialog = new Dialog<>();
+        dialog.setTitle("Ubah Renungan");
+        dialog.setHeaderText("Ubah detail renungan.");
+
+        ButtonType simpanButtonType = new ButtonType("Simpan", ButtonBar.ButtonData.OK_DONE);
+        dialog.getDialogPane().getButtonTypes().addAll(simpanButtonType, ButtonType.CANCEL);
+
+        GridPane grid = new GridPane();
+        grid.setHgap(10);
+        grid.setVgap(10);
+        grid.setPadding(new Insets(20, 150, 10, 10));
+
+        TextField tfTanggal = new TextField(existing.getTanggal());
+        TextField tfJudul = new TextField(existing.getJudul());
+        TextField tfAyat = new TextField(existing.getAyatReferensi());
+        TextArea tfIsi = new TextArea(existing.getIsiRenungan());
+        tfIsi.setPrefRowCount(5);
+        tfIsi.setWrapText(true);
+
+        grid.add(new Label("Tanggal (yyyy-MM-dd):"), 0, 0);
+        grid.add(tfTanggal, 1, 0);
+        grid.add(new Label("Judul:"), 0, 1);
+        grid.add(tfJudul, 1, 1);
+        grid.add(new Label("Ayat Referensi:"), 0, 2);
+        grid.add(tfAyat, 1, 2);
+        grid.add(new Label("Isi Renungan:"), 0, 3);
+        grid.add(tfIsi, 1, 3);
+
+        dialog.getDialogPane().setContent(grid);
+
+        dialog.setResultConverter(dialogButton -> {
+            if (dialogButton == simpanButtonType) {
+                return new Renungan(existing.getId(), tfTanggal.getText(), tfJudul.getText(), tfAyat.getText(), tfIsi.getText());
+            }
+            return null;
+        });
+
+        dialog.showAndWait().ifPresent(updated -> {
+            controller.updateRenungan(updated);
+            showRenunganTable(); // Refresh tabel
+        });
+    }
+
+    private void confirmDeleteRenungan(Renungan r) {
+        Alert alert = new Alert(Alert.AlertType.CONFIRMATION);
+        alert.setTitle("Konfirmasi Hapus");
+        alert.setHeaderText("Hapus Renungan");
+        alert.setContentText("Apakah Anda yakin ingin menghapus data renungan ini?");
+
+        alert.showAndWait().ifPresent(response -> {
+            if (response == ButtonType.OK) {
+                controller.deleteRenungan(r.getId());
+                showRenunganTable();
+            }
+        });
     }
 }

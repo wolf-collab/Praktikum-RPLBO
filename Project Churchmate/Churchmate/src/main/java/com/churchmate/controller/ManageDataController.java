@@ -4,6 +4,9 @@ import com.churchmate.model.Gereja;
 import com.churchmate.model.Ibadah;
 import com.churchmate.model.Kegiatan;
 import com.churchmate.service.ManageDataService;
+import com.churchmate.model.Renungan;
+import com.churchmate.dao.RenunganDAO;
+import java.util.List;
 
 import java.util.List;
 
@@ -85,5 +88,26 @@ public class ManageDataController {
 
     public int getNextKegiatanId() {
         return service.getNextKegiatanId();
+    }
+
+    private final RenunganDAO renunganDAO = new RenunganDAO();
+
+    // ==========================================
+    // METHOD UNTUK RENUNGAN
+    // ==========================================
+    public List<Renungan> getAllRenungan() {
+        return renunganDAO.getAllRenungan();
+    }
+
+    public void addRenungan(Renungan renungan) {
+        renunganDAO.tambahRenungan(renungan);
+    }
+
+    public void updateRenungan(Renungan renungan) {
+        renunganDAO.updateRenungan(renungan);
+    }
+
+    public void deleteRenungan(int id) {
+        renunganDAO.deleteRenungan(id);
     }
 }
