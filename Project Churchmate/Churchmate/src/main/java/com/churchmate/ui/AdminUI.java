@@ -5,10 +5,7 @@ import com.churchmate.model.Gereja;
 import com.churchmate.model.Ibadah;
 import com.churchmate.model.Kegiatan;
 import com.churchmate.model.Renungan;
-import com.churchmate.service.DatabaseService;
-import com.churchmate.service.ManageDataService;
 
-import javafx.application.Platform;
 import javafx.beans.property.SimpleStringProperty;
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
@@ -39,7 +36,7 @@ public class AdminUI {
     private BorderPane mainContent;
     private String currentView = "GEREJA";
     private com.churchmate.service.AuthService authService;
-    private LoginUi loginUi;
+    private LoginUI loginUi;
     private UserUI userUI;
 
     public AdminUI() {
@@ -53,7 +50,7 @@ public class AdminUI {
         this.authService = authService;
     }
 
-    public void setLoginUi(LoginUi loginUi) {
+    public void setLoginUi(LoginUI loginUi) {
         this.loginUi = loginUi;
     }
 

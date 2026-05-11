@@ -6,7 +6,7 @@ import com.churchmate.service.DatabaseService;
 import com.churchmate.controller.ChatManager;
 import com.churchmate.service.ChatService;
 import com.churchmate.service.ManageDataService;
-import com.churchmate.ui.LoginUi;
+import com.churchmate.ui.LoginUI;
 import com.churchmate.ui.UserUI;
 
 import javafx.application.Application;
@@ -22,7 +22,7 @@ public class App extends Application {
         ManageDataController manageDataController = new ManageDataController(manageDataService);
 
         AuthService authService = new AuthService(db.getUserDAO());
-        LoginUi loginUi = new LoginUi(authService, manageDataController);
+        LoginUI loginUi = new LoginUI(authService, manageDataController);
 
         ChatService chatService = new ChatService(db);
         ChatManager chatManager = new ChatManager(chatService);

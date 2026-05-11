@@ -27,7 +27,7 @@ public class UserUI {
 
     private final ChatManager chatManager;
     private final AuthService authService;
-    private final LoginUi loginUi;
+    private final LoginUI loginUi;
     // Buat satu instance DAO agar CSV hanya dibaca satu kali saat aplikasi buka
     private final AlkitabDAO alkitabDAO = new AlkitabDAO();
 
@@ -37,7 +37,7 @@ public class UserUI {
     }
 
     /** Constructor baru dengan dukungan admin login dari dalam chatbot */
-    public UserUI(ChatManager chatManager, AuthService authService, LoginUi loginUi) {
+    public UserUI(ChatManager chatManager, AuthService authService, LoginUI loginUi) {
         this.chatManager = chatManager;
         this.authService = authService;
         this.loginUi = loginUi;

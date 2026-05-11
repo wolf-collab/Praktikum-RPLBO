@@ -3,7 +3,6 @@ package com.churchmate.ui;
 import com.churchmate.controller.ManageDataController;
 import com.churchmate.service.AuthService;
 
-import com.churchmate.service.ManageDataService;
 import javafx.geometry.Insets;
 import javafx.geometry.Pos;
 import javafx.scene.Scene;
@@ -11,11 +10,11 @@ import javafx.scene.control.*;
 import javafx.scene.layout.VBox;
 import javafx.stage.Stage;
 
-public class LoginUi {
+public class LoginUI {
     private final AuthService authService;
     private final ManageDataController manageDataController;
 
-    public LoginUi(AuthService authService, ManageDataController manageDataController) {
+    public LoginUI(AuthService authService, ManageDataController manageDataController) {
         this.authService = authService;
         this.manageDataController = manageDataController;
     }
