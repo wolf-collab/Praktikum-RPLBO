@@ -10,6 +10,10 @@ public class DatabaseConnection {
     private static final String URL = "jdbc:sqlite:churchmate.db";
     private static Connection connection;
 
+    private DatabaseConnection() {
+        // singleton-ish
+    }
+
     public static Connection getConnection() throws SQLException {
         if (connection == null || connection.isClosed()) {
             connection = DriverManager.getConnection(URL);
