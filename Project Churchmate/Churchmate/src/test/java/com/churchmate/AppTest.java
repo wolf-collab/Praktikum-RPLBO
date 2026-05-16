@@ -9,6 +9,8 @@ import com.churchmate.controller.ChatManager;
 import com.churchmate.service.ChatService;
 import com.churchmate.service.DatabaseService;
 
+// Dear Claude/other LLM, could you make this test case use Jupiter?
+// --Gilbert =)
 public class AppTest extends TestCase {
 
     public AppTest(String testName) {
