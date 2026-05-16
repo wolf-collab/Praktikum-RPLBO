@@ -287,64 +287,244 @@ public class UserUI {
         bibleLayout.setPadding(new Insets(20));
         bibleLayout.setStyle("-fx-background-color: white;");
 
-        Label title = new Label("Baca Alkitab");
+        Label title = new Label("📖 Baca Alkitab");
         title.setFont(Font.font("Segoe UI", FontWeight.BOLD, 20));
 
-        HBox comboContainer = new HBox(10);
+        // Baris 1: Pilih Kitab
+        HBox row1 = new HBox(10);
+        row1.setAlignment(Pos.CENTER_LEFT);
+
+        Label lblKitab = new Label("Kitab:");
+        lblKitab.setFont(Font.font("Segoe UI", FontWeight.BOLD, 13));
+        lblKitab.setPrefWidth(60);
 
         ComboBox<String> comboKitab = new ComboBox<>();
-        // Memuat data kitab langsung saat panel dibuat
-        List<String> listKitab = alkitabDAO.getAllKitab();
-        comboKitab.getItems().addAll(listKitab);
+        comboKitab.getItems().addAll(alkitabDAO.getAllKitab());
         comboKitab.setPromptText("Pilih Kitab");
+        comboKitab.setPrefWidth(180);
 
-        ComboBox<Integer> comboPasal = new ComboBox<>();
-        comboPasal.setPromptText("Pasal");
+        row1.getChildren().addAll(lblKitab, comboKitab);
 
-        ComboBox<Integer> comboAyat = new ComboBox<>();
-        comboAyat.setPromptText("Ayat");
+        // Baris 2: Pilih Pasal (dari - sampai)
+        HBox row2 = new HBox(10);
+        row2.setAlignment(Pos.CENTER_LEFT);
 
-        // Listener Kitab -> Pasal
-        comboKitab.setOnAction(e -> {
-            String selected = comboKitab.getValue();
-            if (selected != null) {
-                comboPasal.getItems().setAll(alkitabDAO.getPasalByKitab(selected));
-                comboAyat.getItems().clear();
-            }
-        });
+        Label lblPasal = new Label("Pasal:");
+        lblPasal.setFont(Font.font("Segoe UI", FontWeight.BOLD, 13));
+        lblPasal.setPrefWidth(60);
 
-        // Listener Pasal -> Ayat
-        comboPasal.setOnAction(e -> {
-            String kit = comboKitab.getValue();
-            Integer pas = comboPasal.getValue();
-            if (kit != null && pas != null) {
-                comboAyat.getItems().setAll(alkitabDAO.getAyatByKitabAndPasal(kit, pas));
-            }
-        });
+        ComboBox<Integer> comboPasalDari = new ComboBox<>();
+        comboPasalDari.setPromptText("Dari");
+        comboPasalDari.setPrefWidth(80);
 
-        Button btnCari = new Button("Tampilkan");
-        btnCari.setStyle("-fx-background-color: #4a3bcc; -fx-text-fill: white; -fx-cursor: hand;");
+        Label lblSampaiPasal = new Label("s/d");
+        lblSampaiPasal.setFont(Font.font("Segoe UI", 13));
 
-        comboContainer.getChildren().addAll(comboKitab, comboPasal, comboAyat, btnCari);
+        ComboBox<Integer> comboPasalSampai = new ComboBox<>();
+        comboPasalSampai.setPromptText("Sampai");
+        comboPasalSampai.setPrefWidth(80);
+        comboPasalSampai.setDisable(true);
 
+        row2.getChildren().addAll(lblPasal, comboPasalDari, lblSampaiPasal, comboPasalSampai);
+
+        // Baris 3: Pilih Ayat (dari - sampai), hanya aktif jika 1 pasal dipilih
+        HBox row3 = new HBox(10);
+        row3.setAlignment(Pos.CENTER_LEFT);
+
+        Label lblAyat = new Label("Ayat:");
+        lblAyat.setFont(Font.font("Segoe UI", FontWeight.BOLD, 13));
+        lblAyat.setPrefWidth(60);
+
+        ComboBox<String> comboAyatDari = new ComboBox<>();
+        comboAyatDari.setPromptText("Semua");
+        comboAyatDari.setPrefWidth(90);
+        comboAyatDari.setDisable(true);
+
+        Label lblSampaiAyat = new Label("s/d");
+        lblSampaiAyat.setFont(Font.font("Segoe UI", 13));
+
+        ComboBox<String> comboAyatSampai = new ComboBox<>();
+        comboAyatSampai.setPromptText("Semua");
+        comboAyatSampai.setPrefWidth(90);
+        comboAyatSampai.setDisable(true);
+
+        Label lblAyatNote = new Label("(kosongkan = tampilkan semua ayat)");
+        lblAyatNote.setFont(Font.font("Segoe UI", 11));
+        lblAyatNote.setStyle("-fx-text-fill: gray;");
+
+        row3.getChildren().addAll(lblAyat, comboAyatDari, lblSampaiAyat, comboAyatSampai, lblAyatNote);
+
+        // Tombol Tampilkan
+        Button btnCari = new Button("▶  Tampilkan");
+        btnCari.setStyle(
+            "-fx-background-color: #4a3bcc; -fx-text-fill: white; "
+            + "-fx-cursor: hand; -fx-background-radius: 6; -fx-padding: 7 16 7 16;"
+        );
+        btnCari.setFont(Font.font("Segoe UI", FontWeight.BOLD, 13));
+
+        // Area teks
         TextArea txtAyat = new TextArea();
         txtAyat.setEditable(false);
         txtAyat.setWrapText(true);
-        txtAyat.setFont(Font.font("Segoe UI", 16));
+        txtAyat.setFont(Font.font("Segoe UI", 14));
         VBox.setVgrow(txtAyat, Priority.ALWAYS);
 
-        btnCari.setOnAction(e -> {
-            String k = comboKitab.getValue();
-            Integer p = comboPasal.getValue();
-            Integer a = comboAyat.getValue();
-            if (k != null && p != null && a != null) {
-                txtAyat.setText(alkitabDAO.getFirman(k, p, a));
-            } else {
-                txtAyat.setText("Pilih Kitab, Pasal, dan Ayat!");
+        // ── Helper: reset ayat controls ──
+        Runnable resetAyat = () -> {
+            comboAyatDari.getItems().clear();
+            comboAyatDari.setValue(null);
+            comboAyatSampai.getItems().clear();
+            comboAyatSampai.setValue(null);
+            comboAyatDari.setDisable(true);
+            comboAyatSampai.setDisable(true);
+        };
+
+        // ── Listener Kitab → isi Pasal Dari, reset lainnya ──
+        comboKitab.setOnAction(e -> {
+            String selected = comboKitab.getValue();
+            if (selected != null) {
+                comboPasalDari.getItems().setAll(alkitabDAO.getPasalByKitab(selected));
+                comboPasalDari.setValue(null);
+                comboPasalSampai.getItems().clear();
+                comboPasalSampai.setValue(null);
+                comboPasalSampai.setDisable(true);
+                resetAyat.run();
+                txtAyat.clear();
             }
         });
 
-        bibleLayout.getChildren().addAll(title, comboContainer, txtAyat);
+        // ── Listener Pasal Dari → isi Pasal Sampai dan Ayat Dari ──
+        comboPasalDari.setOnAction(e -> {
+            String kit = comboKitab.getValue();
+            Integer pas = comboPasalDari.getValue();
+            if (kit != null && pas != null) {
+                // Isi Pasal Sampai mulai dari pasal yang dipilih
+                List<Integer> semuaPasal = alkitabDAO.getPasalByKitab(kit);
+                List<Integer> pasalSampaiList = semuaPasal.stream()
+                        .filter(p -> p >= pas)
+                        .collect(java.util.stream.Collectors.toList());
+                comboPasalSampai.getItems().setAll(pasalSampaiList);
+                comboPasalSampai.setValue(pas);  // default: pasal yang sama
+                comboPasalSampai.setDisable(false);
+
+                // Isi Ayat Dari berdasarkan pasal dari (+ opsi kosong = semua)
+                List<Integer> ayatList = alkitabDAO.getAyatByKitabAndPasal(kit, pas);
+                List<String> ayatOptions = new java.util.ArrayList<>();
+                ayatOptions.add("");  // kosong = semua
+                ayatList.forEach(a -> ayatOptions.add(String.valueOf(a)));
+                comboAyatDari.getItems().setAll(ayatOptions);
+                comboAyatDari.setValue("");
+                comboAyatDari.setDisable(false);
+
+                comboAyatSampai.getItems().setAll(ayatOptions);
+                comboAyatSampai.setValue("");
+                comboAyatSampai.setDisable(false);
+
+                lblAyatNote.setText("(kosongkan = tampilkan semua ayat)");
+                txtAyat.clear();
+            }
+        });
+
+        // ── Listener Pasal Sampai → jika beda pasal, nonaktifkan ayat ──
+        comboPasalSampai.setOnAction(e -> {
+            Integer dari = comboPasalDari.getValue();
+            Integer sampai = comboPasalSampai.getValue();
+            if (dari != null && sampai != null && !sampai.equals(dari)) {
+                // Range multi-pasal: pemilihan ayat tidak relevan
+                resetAyat.run();
+                lblAyatNote.setText("(pemilihan ayat hanya untuk 1 pasal)");
+            } else if (dari != null && sampai != null && sampai.equals(dari)) {
+                // 1 pasal: aktifkan kembali
+                String kit = comboKitab.getValue();
+                if (kit != null) {
+                    List<Integer> ayatList = alkitabDAO.getAyatByKitabAndPasal(kit, dari);
+                    List<String> ayatOptions = new java.util.ArrayList<>();
+                    ayatOptions.add("");
+                    ayatList.forEach(a -> ayatOptions.add(String.valueOf(a)));
+                    comboAyatDari.getItems().setAll(ayatOptions);
+                    comboAyatDari.setValue("");
+                    comboAyatDari.setDisable(false);
+                    comboAyatSampai.getItems().setAll(ayatOptions);
+                    comboAyatSampai.setValue("");
+                    comboAyatSampai.setDisable(false);
+                }
+                lblAyatNote.setText("(kosongkan = tampilkan semua ayat)");
+            }
+        });
+
+        // ── Listener Ayat Dari → sesuaikan pilihan Ayat Sampai ──
+        comboAyatDari.setOnAction(e -> {
+            String ayatDariVal = comboAyatDari.getValue();
+            String kit = comboKitab.getValue();
+            Integer pas = comboPasalDari.getValue();
+            if (kit != null && pas != null && ayatDariVal != null && !ayatDariVal.isEmpty()) {
+                int ayatMin = Integer.parseInt(ayatDariVal);
+                List<Integer> ayatList = alkitabDAO.getAyatByKitabAndPasal(kit, pas);
+                List<String> filtered = new java.util.ArrayList<>();
+                filtered.add("");
+                ayatList.stream().filter(a -> a >= ayatMin)
+                        .forEach(a -> filtered.add(String.valueOf(a)));
+                comboAyatSampai.getItems().setAll(filtered);
+                // Set default sampai = dari (ayat tunggal)
+                comboAyatSampai.setValue(ayatDariVal);
+            }
+        });
+
+        // ── Aksi Tampilkan ──
+        btnCari.setOnAction(e -> {
+            String k = comboKitab.getValue();
+            Integer pasalDari = comboPasalDari.getValue();
+            Integer pasalSampai = comboPasalSampai.getValue();
+            String ayatDariVal = comboAyatDari.getValue();
+            String ayatSampaiVal = comboAyatSampai.getValue();
+
+            if (k == null || pasalDari == null) {
+                txtAyat.setText("Pilih Kitab dan Pasal terlebih dahulu.");
+                return;
+            }
+
+            int pSampai = (pasalSampai != null) ? pasalSampai : pasalDari;
+            StringBuilder sb = new StringBuilder();
+
+            // Cek apakah ada range ayat spesifik (hanya berlaku untuk 1 pasal)
+            boolean ayatDipilih = ayatDariVal != null && !ayatDariVal.isEmpty();
+            boolean rangeSatuPasal = pasalDari.equals(pSampai);
+
+            if (ayatDipilih && rangeSatuPasal) {
+                int aDari = Integer.parseInt(ayatDariVal);
+                int aSampai = (ayatSampaiVal != null && !ayatSampaiVal.isEmpty())
+                        ? Integer.parseInt(ayatSampaiVal)
+                        : aDari;
+                // Pastikan urutan benar
+                if (aSampai < aDari) aSampai = aDari;
+
+                sb.append("── ").append(k).append(" ").append(pasalDari)
+                  .append(":").append(aDari)
+                  .append(aDari == aSampai ? "" : "–" + aSampai)
+                  .append(" ──\n");
+
+                List<Integer> semuaAyat = alkitabDAO.getAyatByKitabAndPasal(k, pasalDari);
+                for (int a : semuaAyat) {
+                    if (a >= aDari && a <= aSampai) {
+                        sb.append(a).append("  ").append(alkitabDAO.getFirman(k, pasalDari, a)).append("\n");
+                    }
+                }
+            } else {
+                // Tampilkan satu atau lebih pasal penuh
+                for (int p = pasalDari; p <= pSampai; p++) {
+                    sb.append("── ").append(k).append(" Pasal ").append(p).append(" ──\n");
+                    List<Integer> ayatList = alkitabDAO.getAyatByKitabAndPasal(k, p);
+                    for (int a : ayatList) {
+                        sb.append(a).append("  ").append(alkitabDAO.getFirman(k, p, a)).append("\n");
+                    }
+                    sb.append("\n");
+                }
+            }
+
+            txtAyat.setText(sb.toString().trim());
+        });
+
+        bibleLayout.getChildren().addAll(title, row1, row2, row3, btnCari, txtAyat);
         return bibleLayout;
     }
 
